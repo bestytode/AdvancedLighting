@@ -42,7 +42,7 @@ void main()
 		vec3 reflectDir = reflect(-lightDir, normal);
 		spec = pow(max(dot(reflectDir, viewDir), 0.0f), 8.0f);
 	}
-	vec3 specular = light.specular * spec;
+	vec3 specular = light.specular * spec; // Assuming bright white light color
 
 	// Combine
 	vec3 result = ambient + diffuse + specular;
