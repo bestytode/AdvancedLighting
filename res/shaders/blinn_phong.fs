@@ -20,29 +20,29 @@ uniform Light light;
 
 void main()
 {
-	// Basic attributes
-	vec3 lightDir = normalize(lightPos - FragPos);
+    // Properties
 	vec3 normal = normalize(Normal);
 	vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 lightDir = normalize(lightPos - FragPos);
 
 	// Ambient
 	vec3 ambient = light.ambient * texture(floorTexture, TexCoords).rgb;
 
 	// Diffuse
-	float diff = max(dot(lightDir, normal), 0.0f);
+	float diff = max(dot(normal, lightDir), 0.0f);
 	vec3 diffuse = light.diffuse * diff * texture(floorTexture, TexCoords).rgb;
 
 	// Specular
 	float spec = 0.0f;
 	if(blinn) {
-		vec3 halfWayVector = normalize(lightDir + viewDir);
-		spec = pow(max(dot(halfWayVector, normal), 1.0f), 32.0f);
+		vec3 reflect = reflect(-lightDir, normal);
+		spec = pow(max(dot(reflect, viewDir), 0.0f), 32.0f);
 	}
 	else {
-		vec3 reflectDir = reflect(-lightDir, normal);
-		spec = pow(max(dot(reflectDir, viewDir), 0.0f), 8.0f);
+		vec3 halfWayVector = normalize(viewDir + lightDir);
+		spec = pow(max(dot(normal, halfWayVector), 0.0f), 8.0f);
 	}
-	vec3 specular = light.specular * spec; // Assuming bright white light color
+	vec3 specular = light.specular * spec; // Assuming bright white light
 
 	// Combine
 	vec3 result = ambient + diffuse + specular;
