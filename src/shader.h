@@ -110,7 +110,7 @@ private:
 
 #ifdef  _DEBUG
 		if (!vShaderFile.is_open())  
-			std::cout << "failed to read vertex shader file: " << vertexShaderPath; 
+			std::cout << "failed to open vertex shader file: " << vertexShaderPath; 
 		
 		if (!fShaderFile.is_open()) 
 			std::cout << "failed to open fragment shader file: " << fragmentShaderPath;

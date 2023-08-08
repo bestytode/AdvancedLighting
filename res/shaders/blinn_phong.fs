@@ -36,7 +36,7 @@ void main()
 	float spec = 0.0f;
 	if(blinn) {
 		vec3 reflect = reflect(-lightDir, normal);
-		spec = pow(max(dot(reflect, viewDir), 0.0f), 32.0f);
+		spec = pow(max(dot(reflect, viewDir), 0.0f), 64.0f);
 	}
 	else {
 		vec3 halfWayVector = normalize(viewDir + lightDir);

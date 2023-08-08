@@ -1,4 +1,4 @@
-#ifdef BLINN_PHONG
+#ifdef GAMMA_CORRECTION
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -11,13 +11,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
-unsigned int LoadTexture(const std::string& path);
+unsigned int LoadTexture(const char* path, bool gammaCorrection);
 
 // settings
 constexpr int width = 800;
 constexpr int height = 600;
-bool blinn = false;
-bool blinnKeyPressed = false;
+bool gammaEnabled = false;
+bool gammaKeyPressed = false;
 
 // camera
 Camera camera(0.0f, 0.0f, 3.0f);
@@ -28,7 +28,6 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
 
 int main()
 {
@@ -65,6 +64,7 @@ int main()
         -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
          10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
     };
+
     // plane VAO
     unsigned int planeVAO, planeVBO;
     glGenVertexArrays(1, &planeVAO);
@@ -82,11 +82,24 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glBindVertexArray(0);
 
-    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+    // lighting info
+    // -------------
+    glm::vec3 lightPositions[] = {
+        glm::vec3(-3.0f, 0.0f, 0.0f),
+        glm::vec3(-1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(3.0f, 0.0f, 0.0f)
+    };
+    glm::vec3 lightColors[] = {
+        glm::vec3(0.25),
+        glm::vec3(0.50),
+        glm::vec3(0.75),
+        glm::vec3(1.00)
+    };
 
-    unsigned int floorTexture = LoadTexture("res/textures/wood.png");
-
-    Shader shader("res/shaders/blinn_phong.vs", "res/shaders/blinn_phong.fs");
+    Shader shader("res/shaders/gamma_correction.vs", "res/shaders/gamma_correction.fs");
+    unsigned int floorTexture = LoadTexture("res/textures/wood.png", false);
+    unsigned int floorTextureGammaCorrected = LoadTexture("res/textures/wood.png", true);
     shader.Bind();
     shader.SetInt("floorTexture", 0);
 
@@ -100,33 +113,35 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Uniform attributes
         shader.Bind();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)width / (float)height, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)width / (float)height, 0.01f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
         shader.SetMat4("projection", projection);
         shader.SetMat4("view", view);
-        shader.SetMat4("model", glm::mat4(1.0f));
+        shader.SetMat4("model", model);
 
+        // set light uniforms
+        glUniform3fv(glGetUniformLocation(shader.GetShaderID(), "lightPositions"), 4, &lightPositions[0][0]);
+        glUniform3fv(glGetUniformLocation(shader.GetShaderID(), "lightColors"), 4, &lightColors[0][0]);
         shader.SetVec3("viewPos", camera.position);
-        shader.SetVec3("lightPos", lightPos);
-        shader.SetInt("blinn", blinn);
-
-        shader.SetVec3("light.ambient", glm::vec3(0.05f));
-        shader.SetVec3("light.diffuse", glm::vec3(1.0f));
-        shader.SetVec3("light.specular", glm::vec3(0.3f));
+        shader.SetInt("gamma", gammaEnabled);
 
         // floor
         glBindVertexArray(planeVAO);
-        glActiveTexture(GL_TEXTURE0); // Optional since we have only one texture here
-        glBindTexture(GL_TEXTURE_2D, floorTexture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gammaEnabled ? floorTextureGammaCorrected : floorTexture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        std::cout << "current render mode: "<< (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+        std::cout << (gammaEnabled ? "Gamma enabled" : "Gamma disabled") << std::endl;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    glDeleteVertexArrays(1, &planeVAO);
+    glDeleteBuffers(1, &planeVBO);
+
+    glfwTerminate();
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -145,13 +160,14 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
-    // Switch mode by pressing B
-    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed) {
-        blinn = !blinn;
-        blinnKeyPressed = true;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !gammaKeyPressed)
+    {
+        gammaEnabled = !gammaEnabled;
+        gammaKeyPressed = true;
     }
-    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE) {
-        blinnKeyPressed = false;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
+    {
+        gammaKeyPressed = false;
     }
 }
 
@@ -170,8 +186,8 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
-
-    if (firstMouse) {
+    if (firstMouse)
+    {
         lastX = xpos;
         lastY = ypos;
         firstMouse = false;
@@ -193,21 +209,32 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-unsigned int LoadTexture(const std::string& path)
+// utility function for loading a 2D texture from file
+// If gamma correction true, correct intensity when reading image data
+unsigned int LoadTexture(const char* path, bool gammaCorrection)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
+    unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
     if (data) {
-        GLenum format;
-        if (nrComponents == 1) format = GL_RED;
-        else if (nrComponents == 3) format = GL_RGB;
-        else if (nrComponents == 4) format = GL_RGBA;
+        GLenum internalFormat;
+        GLenum dataFormat;
+        if (nrComponents == 1) {
+            internalFormat = dataFormat = GL_RED;
+        }
+        else if (nrComponents == 3) {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        }
+        else if (nrComponents == 4) {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        }
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
