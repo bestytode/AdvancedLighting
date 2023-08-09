@@ -1,5 +1,3 @@
-#ifdef GAMMA_CORRECTION
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -133,6 +131,7 @@ int main()
         glBindTexture(GL_TEXTURE_2D, gammaEnabled ? floorTextureGammaCorrected : floorTexture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        std::cout << "press space to switch mode\n";
         std::cout << (gammaEnabled ? "Gamma enabled" : "Gamma disabled") << std::endl;
 
         glfwSwapBuffers(window);
@@ -251,5 +250,3 @@ unsigned int LoadTexture(const char* path, bool gammaCorrection)
 
     return textureID;
 }
-
-#endif

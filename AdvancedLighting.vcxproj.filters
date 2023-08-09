@@ -32,14 +32,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\blinn_phong.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\gamma_correction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="res\textures\wood.png">
       <Filter>Resource Files</Filter>
     </Image>
@@ -49,5 +41,14 @@
     <None Include="res\shaders\blinn_phong.fs" />
     <None Include="res\shaders\gamma_correction.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
+    <None Include="res\shaders\shadow_map.vs" />
+    <None Include="res\shaders\shadow_map.fs" />
+    <None Include="res\shaders\debug_quad.vs" />
+    <None Include="res\shaders\debug_quad.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\shadow_map.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
