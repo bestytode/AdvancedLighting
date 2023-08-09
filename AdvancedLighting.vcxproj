@@ -169,6 +169,8 @@
     <None Include="res\shaders\gamma_correction.vs" />
     <None Include="res\shaders\shadow_map.fs" />
     <None Include="res\shaders\shadow_map.vs" />
+    <None Include="res\shaders\shadow_map_depth.fs" />
+    <None Include="res\shaders\shadow_map_depth.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\shadow_map.cpp" />

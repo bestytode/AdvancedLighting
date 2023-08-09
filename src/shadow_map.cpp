@@ -113,12 +113,16 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Shader & texture configs
+	Shader shader("res/shaders/shadow_map.vs", "res/shaders/shadow_map.fs");
 	Shader simpleDepthShader("res/shaders/shadow_map_depth.vs", "res/shaders/shadow_map_depth.fs");
 	Shader debugDepthQuad("res/shaders/debug_quad.vs", "res/shaders/debug_quad.fs");
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
 	debugDepthQuad.Bind();
 	debugDepthQuad.SetInt("depthMap", 0);
 
+	shader.Bind();
+	shader.SetInt("diffuseTexture", 0);
+	shader.SetInt("depthMap", 1);
 	// lighting info
 	glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
 
@@ -156,13 +160,29 @@ int main()
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		shader.Bind();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)width / (float)height, 0.01f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
+		shader.SetMat4("projection", projection);
+		shader.SetMat4("view", view);
+		// set light uniforms
+		shader.SetVec3("viewPos", camera.position);
+		shader.SetVec3("lightPos", lightPos);
+		shader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, woodTexture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		RenderScene(shader, planeVAO);
+
 		// 3. render Depth map to quad for visual debugging
 		debugDepthQuad.Bind();
 		debugDepthQuad.SetFloat("near_plane", near_plane);
 		debugDepthQuad.SetFloat("far_plane", far_plane);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, depthMap); // Use depth map as texture to render
-		RenderQuad();
+		//RenderQuad();
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);

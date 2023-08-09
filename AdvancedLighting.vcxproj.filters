@@ -41,10 +41,12 @@
     <None Include="res\shaders\blinn_phong.fs" />
     <None Include="res\shaders\gamma_correction.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
-    <None Include="res\shaders\shadow_map.vs" />
-    <None Include="res\shaders\shadow_map.fs" />
+    <None Include="res\shaders\shadow_map_depth.vs" />
+    <None Include="res\shaders\shadow_map_depth.fs" />
     <None Include="res\shaders\debug_quad.vs" />
     <None Include="res\shaders\debug_quad.fs" />
+    <None Include="res\shaders\shadow_map.vs" />
+    <None Include="res\shaders\shadow_map.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\shadow_map.cpp">
