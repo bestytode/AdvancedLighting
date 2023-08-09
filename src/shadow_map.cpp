@@ -9,7 +9,7 @@
 #include "model.h"
 
 // Function declarations
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
@@ -20,13 +20,13 @@ void RenderCube();
 void RenderQuad();
 
 // Scene settings
-constexpr int width = 800;
-constexpr int height = 600;
+constexpr int SCR_WIDTH = 800;
+constexpr int SCR_HEIGHT = 600;
 
 // Camera settings
 Camera camera(0.0f, 0.0f, 3.0f);
-float lastX = (float)width / 2.0;
-float lastY = (float)height / 2.0;
+float lastX = (float)SCR_WIDTH / 2.0;
+float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
 
 // Timing
@@ -39,7 +39,7 @@ int main()
 	try {
 		if (!glfwInit()) 
 			throw std::runtime_error("failed to init glfw");
-		window = glfwCreateWindow(width, height, "hnzz", nullptr, nullptr);
+		window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "hnzz", nullptr, nullptr);
 		if (!window)
 			throw std::runtime_error("failed to create window");
 
@@ -89,13 +89,12 @@ int main()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 	glBindVertexArray(0);
 
-	// configure depth map FBO
-	// -----------------------
+	// Configure depth map FBO (frame buffer object)
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	unsigned int depthMapFBO;
 	glGenFramebuffers(1, &depthMapFBO);
 
-	// create depth texture
+	// Create depth texture (id)
 	unsigned int depthMap;
 	glGenTextures(1, &depthMap);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -105,7 +104,7 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	// attach depth texture as FBO's depth buffer
+	// Attach depth texture as FBO's depth buffer
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 	glDrawBuffer(GL_NONE);
@@ -116,15 +115,17 @@ int main()
 	Shader shader("res/shaders/shadow_map.vs", "res/shaders/shadow_map.fs");
 	Shader simpleDepthShader("res/shaders/shadow_map_depth.vs", "res/shaders/shadow_map_depth.fs");
 	Shader debugDepthQuad("res/shaders/debug_quad.vs", "res/shaders/debug_quad.fs");
+
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
 	debugDepthQuad.Bind();
 	debugDepthQuad.SetInt("depthMap", 0);
-
 	shader.Bind();
 	shader.SetInt("diffuseTexture", 0);
 	shader.SetInt("depthMap", 1);
-	// lighting info
-	glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+
+	// Lighting info
+	glm::vec3 lightPosition(-2.0f, 4.0f, -1.0f); // Point light
+	glm::vec3 lightDirection(1.0f, -1.0f, 1.0f); // Directional light
 
 	while (!glfwWindowShouldClose(window)) {
 
@@ -137,17 +138,17 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Set up variables
+		// Set up shader for generating depth map
 		float near_plane = 1.0f, far_plane = 7.5f;
 		glm::mat4 lightProjection, lightView, lightSpaceMatrix;
 		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-		lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+		lightView = glm::lookAt(lightPosition, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 		lightSpaceMatrix = lightProjection * lightView;
 
 		simpleDepthShader.Bind();
 		simpleDepthShader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-		// 1. render scene from light's point of view
+		// 1. Render scene from light's point of view to generate depth map
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
@@ -156,18 +157,20 @@ int main()
 		RenderScene(simpleDepthShader, planeVAO);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// 2. reset viewport
-		glViewport(0, 0, width, height);
+		// Reset viewport
+		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// 2. Render scene using the generated depth map
 		shader.Bind();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)width / (float)height, 0.01f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.01f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
-		// set light uniforms
+
 		shader.SetVec3("viewPos", camera.position);
-		shader.SetVec3("lightPos", lightPos);
+		//shader.SetVec3("lightPos", lightPos);
+		shader.SetVec3("lightDirection", lightDirection);
 		shader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 
 		glActiveTexture(GL_TEXTURE0);
@@ -176,7 +179,7 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		RenderScene(shader, planeVAO);
 
-		// 3. render Depth map to quad for visual debugging
+		// Render Depth map to quad for visual debugging
 		debugDepthQuad.Bind();
 		debugDepthQuad.SetFloat("near_plane", near_plane);
 		debugDepthQuad.SetFloat("far_plane", far_plane);
@@ -195,8 +198,7 @@ int main()
 	glfwTerminate();
 }
 
-// renders the 3D scene
-// --------------------
+// Render the 3D scene
 void RenderScene(Shader& shader, unsigned int _id)
 {
 	// floor
@@ -227,14 +229,12 @@ void RenderScene(Shader& shader, unsigned int _id)
 }
 
 // renderCube() renders a 1x1 3D cube in NDC.
-// -------------------------------------------------
 unsigned int cubeVAO = 0;
 unsigned int cubeVBO = 0;
 void RenderCube()
 {
 	// initialize (if necessary)
-	if (cubeVAO == 0)
-	{
+	if (cubeVAO == 0) {
 		float vertices[] = {
 			// back face
 			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
@@ -243,6 +243,7 @@ void RenderCube()
 			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
 			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
 			-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+
 			// front face
 			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
 			 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
@@ -250,6 +251,7 @@ void RenderCube()
 			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
 			-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
 			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+
 			// left face
 			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
 			-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
@@ -257,13 +259,15 @@ void RenderCube()
 			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
 			-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
 			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+
 			// right face
 			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
 			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
 			 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
 			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
 			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left  
+
 			 // bottom face
 			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
 			  1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
@@ -271,6 +275,7 @@ void RenderCube()
 			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
 			 -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
 			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+
 			 // top face
 			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
 			  1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
@@ -305,13 +310,11 @@ void RenderCube()
 }
 
 // renderQuad() renders a 1x1 XY quad in NDC
-// -----------------------------------------
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
 void RenderQuad()
 {
-	if (quadVAO == 0)
-	{
+	if (quadVAO == 0) {
 		float quadVertices[] = {
 			// positions        // texture Coords
 			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
@@ -319,6 +322,7 @@ void RenderQuad()
 			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
 			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
 		};
+
 		// setup plane VAO
 		glGenVertexArrays(1, &quadVAO);
 		glGenBuffers(1, &quadVBO);
@@ -340,16 +344,14 @@ void RenderQuad()
 
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT)
 {
-	// make sure the viewport matches the new window dimensions; note that width and 
-	// height will be significantly larger than specified on retina displays.
-	glViewport(0, 0, width, height);
+	// make sure the viewport matches the new window dimensions; note that SCR_WIDTH and 
+	// SCR_HEIGHT will be significantly larger than specified on retina displays.
+	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
 // glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
 	float xpos = static_cast<float>(xposIn);
@@ -372,14 +374,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
+// Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 void ProcessInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -398,30 +398,35 @@ void ProcessInput(GLFWwindow* window)
 // IMPORTANT REMINDER:
 // If you are loading textures with gammaCorrection set to true (meaning they are sRGB),
 // ensure to also enable GL_FRAMEBUFFER_SRGB in your rendering pipeline.
-// glEnable(GL_FRAMEBUFFER_SRGB);
+// i.e., glEnable(GL_FRAMEBUFFER_SRGB);
 unsigned int LoadTexture(const std::string& path, bool gammaCorrection)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
 
-	int width, height, nrComponents;
-	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
+	int SCR_WIDTH, SCR_HEIGHT, nrComponents;
+	unsigned char* data = stbi_load(path.c_str(), &SCR_WIDTH, &SCR_HEIGHT, &nrComponents, 0);
 	if (data) {
-		GLenum format;
-		GLenum internalFormat;
-		if (nrComponents == 1) 
+		GLenum format = GL_RED;
+		GLenum internalFormat = GL_RED;
+		if (nrComponents == 1) {
 			format = internalFormat = GL_RED;
-		if (nrComponents == 3) { 
+		}
+		else if (nrComponents == 3) { 
 			internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
 			format = GL_RGB; 
 		}
-		if (nrComponents == 4) { 
+		else if (nrComponents == 4) { 
 			internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
 			format = GL_RGBA; 
 		}
+		else {
+			std::cout << "unexpected number of components: " << nrComponents << "in texture" << path << std::endl;
+			return 0;
+		}
 
 		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, SCR_WIDTH, SCR_HEIGHT, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat 

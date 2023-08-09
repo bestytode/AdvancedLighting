@@ -9,10 +9,11 @@ in vec4 FragPosLightSpace;
 uniform sampler2D diffuseTexture;
 uniform sampler2D depthMap;
 
-uniform vec3 lightPos;
+uniform vec3 lightPosition;
+uniform vec3 lightDirection;
 uniform vec3 viewPos;
 
-float ShadowCalculation(vec4 fragPosLightSpace);
+bool ShadowCalculation(vec4 fragPosLightSpace);
 
 void main()
 {
@@ -24,7 +25,7 @@ void main()
     vec3 ambient = 0.15 * color;
 
     // Diffuse
-    vec3 lightDir = normalize(lightPos - FragPos);
+    vec3 lightDir = normalize(-lightDirection);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * lightColor;
 
@@ -37,13 +38,20 @@ void main()
     vec3 specular = spec * lightColor;   
     
     // shadow
-    float shadow = ShadowCalculation(FragPosLightSpace);       
-    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;    
+    vec3 lighting;
+    bool isInShadow = ShadowCalculation(FragPosLightSpace);
+
+    if (isInShadow) {
+        lighting = ambient * color;
+    }
+    else {
+        lighting = (ambient + diffuse + specular) * color;
+    } 
 
     FragColor = vec4(lighting, 1.0f);
 }
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+bool ShadowCalculation(vec4 fragPosLightSpace)
 {
     // Calculations
     fragPosLightSpace /= fragPosLightSpace.w;
@@ -53,7 +61,10 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     float closestDepth = texture(depthMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
 
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+    // Since depth range is from 0 to 1, the greater depth value is, 
+    // actually the further the object is becomming.
+    if (currentDepth > closestDepth) 
+        return true;
 
-    return shadow;
+    return false;
 }
