@@ -47,6 +47,8 @@
     <None Include="res\shaders\debug_quad.fs" />
     <None Include="res\shaders\shadow_map.vs" />
     <None Include="res\shaders\shadow_map.fs" />
+    <None Include="res\shaders\light.vs" />
+    <None Include="res\shaders\light.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\shadow_map.cpp">

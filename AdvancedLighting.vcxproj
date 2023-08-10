@@ -167,6 +167,8 @@
     <None Include="res\shaders\debug_quad.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
     <None Include="res\shaders\gamma_correction.vs" />
+    <None Include="res\shaders\light.fs" />
+    <None Include="res\shaders\light.vs" />
     <None Include="res\shaders\shadow_map.fs" />
     <None Include="res\shaders\shadow_map.vs" />
     <None Include="res\shaders\shadow_map_depth.fs" />

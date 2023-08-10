@@ -19,5 +19,5 @@ void main()
     FragPos = vec3(model * vec4(aPos, 1.0f));
     Normal = transpose(inverse(mat3(model))) * aNormal;
     TexCoords = aTexCoords;
-    FragPosLightSpace = lightSpaceMatrix * vec4(aPos, 1.0f); // Need to be converted to NDC space later
+    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0f); // Need to be converted to NDC space later
 }

@@ -15,7 +15,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path, bool gammaCorrection = false);
 
-void RenderScene(Shader& shader, unsigned int _id);
+void RenderScene(Shader& shader);
 void RenderCube();
 void RenderQuad();
 
@@ -32,6 +32,9 @@ bool firstMouse = true;
 // Timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// meshes
+unsigned int planeVAO;
 
 int main()
 {
@@ -54,8 +57,8 @@ int main()
 
 		// configure global opengl state
 		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	catch (const std::runtime_error& e) {
 		std::cerr << e.what() << std::endl;
@@ -74,7 +77,7 @@ int main()
 	};
 
 	// Set up VAO & VBO for plane
-	unsigned int planeVAO, planeVBO;
+	unsigned int planeVBO;
 	glGenVertexArrays(1, &planeVAO);
 	glGenBuffers(1, &planeVBO);
 	glBindVertexArray(planeVAO);
@@ -115,6 +118,7 @@ int main()
 	Shader shader("res/shaders/shadow_map.vs", "res/shaders/shadow_map.fs");
 	Shader simpleDepthShader("res/shaders/shadow_map_depth.vs", "res/shaders/shadow_map_depth.fs");
 	Shader debugDepthQuad("res/shaders/debug_quad.vs", "res/shaders/debug_quad.fs");
+	Shader lightShader("res/shaders/light.vs", "res/shaders/light.fs");
 
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
 	debugDepthQuad.Bind();
@@ -125,7 +129,7 @@ int main()
 
 	// Lighting info
 	glm::vec3 lightPosition(-2.0f, 4.0f, -1.0f); // Point light
-	glm::vec3 lightDirection(1.0f, -1.0f, 1.0f); // Directional light
+	//glm::vec3 lightDirection(1.0f, -1.0f, 1.0f); // Directional light
 
 	while (!glfwWindowShouldClose(window)) {
 
@@ -139,6 +143,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Set up shader for generating depth map
+		// LookAt function: (position, target, worldUp)
 		float near_plane = 1.0f, far_plane = 7.5f;
 		glm::mat4 lightProjection, lightView, lightSpaceMatrix;
 		lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
@@ -154,7 +159,9 @@ int main()
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, woodTexture);
-		RenderScene(simpleDepthShader, planeVAO);
+		glCullFace(GL_FRONT);
+		RenderScene(simpleDepthShader);
+		glCullFace(GL_BACK);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// Reset viewport
@@ -169,15 +176,15 @@ int main()
 		shader.SetMat4("view", view);
 
 		shader.SetVec3("viewPos", camera.position);
-		//shader.SetVec3("lightPos", lightPos);
-		shader.SetVec3("lightDirection", lightDirection);
+		shader.SetVec3("lightPosition", lightPosition);
+		//shader.SetVec3("lightDirection", lightDirection);
 		shader.SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, woodTexture);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
-		RenderScene(shader, planeVAO);
+		RenderScene(shader);
 
 		// Render Depth map to quad for visual debugging
 		debugDepthQuad.Bind();
@@ -186,6 +193,19 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, depthMap); // Use depth map as texture to render
 		//RenderQuad();
+
+
+		// Render light 
+		lightShader.Bind();
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPosition);
+		model = glm::scale(model, glm::vec3(0.1f));
+
+		lightShader.SetMat4("projection", projection);
+		lightShader.SetMat4("view", view);
+		lightShader.SetMat4("model", model);
+
+		RenderCube();
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
@@ -199,12 +219,12 @@ int main()
 }
 
 // Render the 3D scene
-void RenderScene(Shader& shader, unsigned int _id)
+void RenderScene(Shader& shader)
 {
 	// floor
 	glm::mat4 model = glm::mat4(1.0f);
 	shader.SetMat4("model", model);
-	glBindVertexArray(_id);
+	glBindVertexArray(planeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	// cubes
