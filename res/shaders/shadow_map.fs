@@ -52,10 +52,10 @@ void main()
 {           
     vec3 color = texture(diffuseTexture, TexCoords).rgb;
     vec3 normal = normalize(Normal);
-    vec3 lightColor = vec3(0.3);
+    vec3 lightColor = vec3(0.7);
 
     // ambient
-    vec3 ambient = 0.3 * lightColor;
+    vec3 ambient = 0.5 * lightColor;
 
     // diffuse
     vec3 lightDir = normalize(lightPosition - FragPos);
