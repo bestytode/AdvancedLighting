@@ -19,10 +19,10 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
 
-    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(depthMap, projCoords.xy).r; 
+    // Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    //float closestDepth = texture(depthMap, projCoords.xy).r; 
 
-    // get depth of current fragment from light's perspective
+    // Get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     vec3 normal = normalize(Normal);
     vec3 lightDir = normalize(lightPosition - FragPos);
