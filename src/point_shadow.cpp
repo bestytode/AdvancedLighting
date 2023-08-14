@@ -85,8 +85,8 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Shader configs
-	Shader shader("res/shaders/point_shadows.vs", "/res/shaders/point_shadows.fs");
-	Shader simpleDepthShader("res/shaders/point_shadows_depth.vs", "res/shaders/point_shadows_depth.fs", "res/shaders/point_shadows_depth.gs");
+	Shader shader("res/shaders/point_shadow.vs", "res/shaders/point_shadow.fs");
+	Shader simpleDepthShader("res/shaders/point_shadow_depth.vs", "res/shaders/point_shadow_depth.fs", "res/shaders/point_shadow_depth.gs");
 
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
 
@@ -107,7 +107,7 @@ int main()
 		// move light position over time
 		//lightPos.z = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
 
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(0.5f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// 0. create depth cubemap transformation matrices

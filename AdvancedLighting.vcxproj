@@ -172,6 +172,7 @@
     <None Include="res\shaders\point_shadow.fs" />
     <None Include="res\shaders\point_shadow.vs" />
     <None Include="res\shaders\point_shadow_depth.fs" />
+    <None Include="res\shaders\point_shadow_depth.gs" />
     <None Include="res\shaders\point_shadow_depth.vs" />
     <None Include="res\shaders\shadow_map.fs" />
     <None Include="res\shaders\shadow_map.vs" />
