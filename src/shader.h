@@ -17,6 +17,12 @@ public:
 	{
 		const auto& [vertexSource, fragmentSource, geometrySource] = ParseShader(vertexShaderPath, fragmentShaderPath, geometryShaderPath);
 		m_rendererID = CreateShader(vertexSource, fragmentSource, geometrySource);
+
+#ifdef _DEBUG
+		std::cout << "successfully create and compile shader: \n" << vertexShaderPath <<
+			"\n" << fragmentShaderPath << "\n" << geometryShaderPath;
+#endif 
+
 	}
 
 	~Shader()

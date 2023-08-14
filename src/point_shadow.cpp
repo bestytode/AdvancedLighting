@@ -33,6 +33,7 @@ float lastFrame = 0.0f;
 
 int main()
 {
+	// glfw & glew configs
 	GLFWwindow* window = nullptr;
 	try {
 		if (!glfwInit())
@@ -57,9 +58,6 @@ int main()
 		std::cerr << e.what() << std::endl;
 		return -1;
 	}
-
-	// Vertices configs
-
 
 	// Create & config cube map
 	unsigned int depthCubemap;
