@@ -13,10 +13,13 @@ void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
+unsigned int LoadTexture(const char* path);
 
 // Scene settings
 constexpr int SCR_WIDTH = 800;
 constexpr int SCR_HEIGHT = 600;
+bool shadow = true;
+bool shadowKeyPressed = false;
 
 // Camera settings
 Camera camera(0.0f, 0.0f, 3.0f);
@@ -48,6 +51,7 @@ int main()
 			throw std::runtime_error("failed to init glew");
 
 		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
 	}
 	catch (const std::runtime_error& e) {
 		std::cerr << e.what() << std::endl;
@@ -57,6 +61,72 @@ int main()
 	// Vertices configs
 
 
+	// Create & config cube map
+	unsigned int depthCubemap;
+	unsigned int depthCubeFBO;
+	glGenFramebuffers(1, &depthCubeFBO);
+	glGenTextures(1, &depthCubemap);
+	const unsigned int SHADOW_WIDTH = 1024;
+	const unsigned int SHADOW_HEIGHT = 1024;
+	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+	for (size_t i = 0; i < 6; i++)
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, depthCubeFBO);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Shader configs
+	Shader shader("res/shaders/point_shadows.vs", "/res/shaders/point_shadows.fs");
+	Shader simpleDepthShader("res/shaders/point_shadows_depth.vs", "res/shaders/point_shadows_depth.fs", "res/shaders/point_shadows_depth.gs");
+
+	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
+
+	shader.Bind();
+	shader.SetInt("diffuseTexture", 0);
+	shader.SetInt("depthMap", 1);
+
+	// lighting info
+	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+
+	while (!glfwWindowShouldClose(window)) {
+		float currentFrame = static_cast<float>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		ProcessInput(window);
+
+		// move light position over time
+		//lightPos.z = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
+
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// 0. create depth cubemap transformation matrices
+
+
+		// 1. render scene to depth cubemap
+		
+
+		// 2. render scene as normal 
+
+
+		// set lighting uniforms
+
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -109,4 +179,50 @@ void ProcessInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !shadowKeyPressed) {
+		shadow = !shadow;
+		shadowKeyPressed = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+		shadowKeyPressed = false;
+	}
+}
+
+// utility function for loading a 2D texture from file
+// ---------------------------------------------------
+unsigned int LoadTexture(char const* path)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data) {
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else {
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
 }
