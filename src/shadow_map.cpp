@@ -201,7 +201,7 @@ int main()
 		lightShader.Bind();
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPosition);
-		model = glm::scale(model, glm::vec3(0.1f));
+		model = glm::scale(model, glm::vec3(0.01f));
 
 		lightShader.SetMat4("projection", projection);
 		lightShader.SetMat4("view", view);

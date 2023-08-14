@@ -30,7 +30,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
         return 0.0f;
     
     vec3 normal = normalize(Normal);
-    vec3 lightDir = normalize(lightPosition - FragPos);
+    vec3 lightDir = normalize(+lightPosition - vec3(0.0f));
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
 
     // Check whether current frag pos is in shadow
@@ -58,7 +58,7 @@ void main()
     vec3 ambient = 0.5 * lightColor;
 
     // diffuse
-    vec3 lightDir = normalize(lightPosition - FragPos);
+    vec3 lightDir = normalize(+lightPosition - vec3(0.0f)); // directinoal light when lightDir is fixed
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * lightColor;
 
