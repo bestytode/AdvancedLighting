@@ -62,10 +62,10 @@ int main()
 	// Create & config cube map
 	unsigned int depthCubemap;
 	unsigned int depthCubeFBO;
+	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	glGenFramebuffers(1, &depthCubeFBO);
 	glGenTextures(1, &depthCubemap);
-	const unsigned int SHADOW_WIDTH = 1024;
-	const unsigned int SHADOW_HEIGHT = 1024;
+
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 	for (size_t i = 0; i < 6; i++)
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
