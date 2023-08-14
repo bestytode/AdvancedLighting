@@ -15,6 +15,9 @@ public:
 
 	Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath, const std::string& geometryShaderPath = "")
 	{
+		if (geometryShaderPath.empty()) {
+
+		}
 		const auto& [vertexSource, fragmentSource, geometrySource] = ParseShader(vertexShaderPath, fragmentShaderPath, geometryShaderPath);
 		m_rendererID = CreateShader(vertexSource, fragmentSource, geometrySource);
 
@@ -40,7 +43,7 @@ public:
 		glUseProgram(0);
 	}
 
-	unsigned int GetShaderID() const
+	unsigned int GetID() const
 	{
 		return m_rendererID;
 	}
@@ -107,7 +110,8 @@ private:
 	{
 		std::ifstream vShaderFile(vertexShaderPath);
 		std::ifstream fShaderFile(fragmentShaderPath);
-		std::ifstream gShaderFile(geometryShaderPath);
+
+		std::stringstream vShaderStream, fShaderStream, gShaderStream;
 
 #ifdef  _DEBUG
 		if (!vShaderFile.is_open())  
@@ -115,19 +119,23 @@ private:
 		
 		if (!fShaderFile.is_open())
 			std::cout << "failed to open fragment shader file: " << fragmentShaderPath;
-
-		if (!gShaderFile.is_open() && !geometryShaderPath.empty())
-			std::cout << "failed to open geometry shader file: " << geometryShaderPath;
 #endif 
 
-		std::stringstream vShaderStream, fShaderStream, gShaderStream;
 		vShaderStream << vShaderFile.rdbuf();
 		fShaderStream << fShaderFile.rdbuf();
-		gShaderStream << gShaderFile.rdbuf();
+
+		if (!geometryShaderPath.empty()) {
+			std::ifstream gShaderFile(geometryShaderPath);
+#ifdef _DEBUG
+			if (!gShaderFile.is_open())
+				std::cout << "failed to open geometry shader file: " << geometryShaderPath;
+#endif
+			gShaderStream << gShaderFile.rdbuf();
+			gShaderFile.close();
+		}
 
 		vShaderFile.close();
 		fShaderFile.close();
-		gShaderFile.close();
 
 		return std::make_tuple(vShaderStream.str(), fShaderStream.str(), gShaderStream.str());
 	}
