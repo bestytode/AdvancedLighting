@@ -159,8 +159,8 @@ int main()
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, woodTexture);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, woodTexture);
 		glCullFace(GL_FRONT);
 		RenderScene(simpleDepthShader);
 		glCullFace(GL_BACK);

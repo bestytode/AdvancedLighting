@@ -60,8 +60,7 @@ int main()
 	}
 
 	// Create & config cube map
-	unsigned int depthCubemap;
-	unsigned int depthCubeFBO;
+	unsigned int depthCubemap, depthCubeFBO;
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	glGenFramebuffers(1, &depthCubeFBO);
 	glGenTextures(1, &depthCubemap);
@@ -82,7 +81,7 @@ int main()
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// Shader configs
+	// Shaders & textures configs
 	Shader shader("res/shaders/point_shadow.vs", "res/shaders/point_shadow.fs");
 	Shader simpleDepthShader("res/shaders/point_shadow_depth.vs", "res/shaders/point_shadow_depth.fs", "res/shaders/point_shadow_depth.gs");
 

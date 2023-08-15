@@ -15,9 +15,6 @@ public:
 
 	Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath, const std::string& geometryShaderPath = "")
 	{
-		if (geometryShaderPath.empty()) {
-
-		}
 		const auto& [vertexSource, fragmentSource, geometrySource] = ParseShader(vertexShaderPath, fragmentShaderPath, geometryShaderPath);
 		m_rendererID = CreateShader(vertexSource, fragmentSource, geometrySource);
 
