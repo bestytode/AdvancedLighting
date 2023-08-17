@@ -94,6 +94,9 @@ int main()
 	// lighting info
 	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
+	// 0. create depth cubemap transformation matrices
+	float near_plane = 1.0f;
+	float far_plane = 25.0f;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), float(SHADOW_WIDTH)/float(SHADOW_HEIGHT), 1.0f, 25.0f);
 
 	std::vector<glm::vec3> directions = {
@@ -125,11 +128,16 @@ int main()
 		glClearColor(0.5f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// 0. create depth cubemap transformation matrices
+		
 
 
 		// 1. render scene to depth cubemap
-		
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthCubeFBO);
+		glClear(GL_DEPTH_BUFFER);
+		simpleDepthShader.Bind();
+		for (unsigned int i = 0; i < 6; ++i)
+			simpleDepthShader.SetMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
 
 		// 2. render scene as normal 
 
