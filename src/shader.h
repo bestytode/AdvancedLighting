@@ -144,7 +144,7 @@ private:
 		unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
 		unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
-		unsigned int gs;
+		unsigned int gs = 0;
 		if (!geometryShader.empty()) {
 			gs = CompileShader(GL_GEOMETRY_SHADER, geometryShader);
 			glAttachShader(program, gs);
@@ -156,7 +156,7 @@ private:
 
 		glDeleteShader(vs);
 		glDeleteShader(fs);
-		if (!geometryShader.empty())
+		if (gs!=0)
 			glDeleteShader(gs);
 
 		return program;

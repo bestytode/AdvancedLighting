@@ -94,6 +94,24 @@ int main()
 	// lighting info
 	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
+	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), float(SHADOW_WIDTH)/float(SHADOW_HEIGHT), 1.0f, 25.0f);
+
+	std::vector<glm::vec3> directions = {
+		glm::vec3(1.0, 0.0, 0.0), glm::vec3(-1.0, 0.0, 0.0),
+		glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, -1.0, 0.0),
+		glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -1.0)
+	};
+	std::vector<glm::vec3> upVectors = {
+		glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, -1.0, 0.0),
+		glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -1.0),
+		glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, -1.0, 0.0)
+	};
+
+	std::vector<glm::mat4> shadowTransforms;
+	for (int i = 0; i < 6; ++i) {
+		shadowTransforms.emplace_back(shadowProj * glm::lookAt(lightPos, lightPos + directions[i], upVectors[i]));
+	}
+
 	while (!glfwWindowShouldClose(window)) {
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
@@ -197,7 +215,7 @@ unsigned int LoadTexture(char const* path)
 	int width, height, nrComponents;
 	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
 	if (data) {
-		GLenum format;
+		GLenum format = GL_RGBA;
 		if (nrComponents == 1)
 			format = GL_RED;
 		else if (nrComponents == 3)
