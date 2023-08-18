@@ -98,7 +98,7 @@ int main()
 
 	// 0. create depth cubemap transformation matrices
 	float near_plane = 1.0f;
-	float far_plane = 25.0f;
+	float far_plane = 8.5f;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), float(SHADOW_WIDTH)/float(SHADOW_HEIGHT), near_plane, far_plane);
 
 	std::vector<glm::vec3> directions = {

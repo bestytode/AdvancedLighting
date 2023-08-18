@@ -13,7 +13,7 @@ uniform vec3 lightPos;
 uniform float far_plane;
 uniform bool shadows;
 
-float CalculateShadow();
+float ShadowCalculation();
 
 void main()
 {
@@ -36,10 +36,10 @@ void main()
     vec3 specular = spec * lightColor; 
 	
 	// Calculate shadow
-    float shadow = shadows ? CalculateShadow() : 0.0f;                      
+    float shadow = shadows ? ShadowCalculation() : 0.0f;                      
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;   
 
-	FragColor = vec4(color, 1.0f);
+	FragColor = vec4(lighting, 1.0f);
 }
 
 float ShadowCalculation()
