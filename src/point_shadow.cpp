@@ -158,6 +158,8 @@ int main()
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 		RenderScene(shader);
 
+		std::cout << "render mode: " << (shadows ? "point shadow" : "origin") << std::endl;
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

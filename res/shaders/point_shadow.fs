@@ -13,7 +13,18 @@ uniform vec3 lightPos;
 uniform float far_plane;
 uniform bool shadows;
 
+// array of offset direction for sampling
+vec3 gridSamplingDisk[20] = vec3[]
+(
+   vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1), 
+   vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+   vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
+   vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+);
+
 float ShadowCalculation();
+float ShadowCalculation_3dimensions();
 
 void main()
 {
@@ -42,7 +53,6 @@ void main()
 	FragColor = vec4(lighting, 1.0f);
 }
 
-
 float ShadowCalculation()
 {
     // We use a vector from light to fragment as texture coordinates
@@ -51,16 +61,34 @@ float ShadowCalculation()
 
     float bias = 0.05;
     float shadow = 0.0f;
-    for(float i = -0.1; i < 0.1; i += 0.05) {
-        for (float j = -0.1; j < 0.1; j += 0.05) {
-            for(float k = -0.1; k < 0.1; k += 0.05) {
-                float closetDepth = texture(depthMap, fragToLight + vec3(i, j, k)).r;
-                closetDepth *= far_plane; // Undo mapping [0, 1]
-                if(currentDepth - bias > closetDepth)
-                    shadow += 1.0f;
+    float viewDistance = length(viewPos - FragPos);
+    float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
+
+    for(int i = 0; i < 20; i++) {
+        float closetDepth = texture(depthMap, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        closetDepth *= far_plane; // Undo mapping [0, 1]
+        shadow += (currentDepth - bias > closetDepth) ? 1.0f : 0.0f;
+    }
+        
+    return shadow / 20;
+}
+
+
+float ShadowCalculation_3dimensions()
+{
+    vec3 frag_light = FragPos - lightPos;
+    float current = length(frag_light);
+
+    float shadow = 0.0f;
+    float bias = 0.05;
+    for(float i = -0.05; i <= 0.05; i += 0.05) {
+        for(float j = -0.05; j <= 0.05; j += 0.05) {
+            for(float k = -0.05; k <= 0.05; k += 0.05) {
+                float closet = texture(depthMap, frag_light + vec3(i, j, k)).r;
+                closet *= far_plane; // Undo mapping [0, 1]
+                shadow += (current - bias > closet) ? 1.0f : 0.0f;
             }
         }
     }
-    
-    return shadow / 64;
+    return shadow / 27;
 }
