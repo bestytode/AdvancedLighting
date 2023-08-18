@@ -61,16 +61,14 @@ float ShadowCalculation()
 
     float bias = 0.05;
     float shadow = 0.0f;
-    float viewDistance = length(viewPos - FragPos);
-    float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
 
     for(int i = 0; i < 20; i++) {
-        float closetDepth = texture(depthMap, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        float closetDepth = texture(depthMap, fragToLight + 0.05f * gridSamplingDisk[i]).r;
         closetDepth *= far_plane; // Undo mapping [0, 1]
         shadow += (currentDepth - bias > closetDepth) ? 1.0f : 0.0f;
     }
         
-    return shadow / 20;
+    return shadow / 20.0f;
 }
 
 
