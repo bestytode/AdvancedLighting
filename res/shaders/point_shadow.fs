@@ -21,7 +21,7 @@ void main()
 	vec3 normal = normalize(Normal);
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 color = texture(diffuseTexture, TexCoords).rgb;
-	vec3 lightColor = vec3(0.3f);
+	vec3 lightColor = vec3(0.5f);
 
 	// Ambient
 	vec3 ambient = 0.3 * lightColor;
@@ -42,21 +42,25 @@ void main()
 	FragColor = vec4(lighting, 1.0f);
 }
 
+
 float ShadowCalculation()
 {
-    // get vector between fragment position and light position
+    // We use a vector from light to fragment as texture coordinates
     vec3 fragToLight = FragPos - lightPos;
-    // ise the fragment to light vector to sample from the depth map    
-    float closestDepth = texture(depthMap, fragToLight).r;
-    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
-    closestDepth *= far_plane;
-    // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
-    // test for shadows
-    float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
-    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;        
-    // display closestDepth as debug (to visualize depth cubemap)
-    // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);    
-        
-    return shadow;
+
+    float bias = 0.05;
+    float shadow = 0.0f;
+    for(float i = -0.1; i < 0.1; i += 0.05) {
+        for (float j = -0.1; j < 0.1; j += 0.05) {
+            for(float k = -0.1; k < 0.1; k += 0.05) {
+                float closetDepth = texture(depthMap, fragToLight + vec3(i, j, k)).r;
+                closetDepth *= far_plane; // Undo mapping [0, 1]
+                if(currentDepth - bias > closetDepth)
+                    shadow += 1.0f;
+            }
+        }
+    }
+    
+    return shadow / 64;
 }

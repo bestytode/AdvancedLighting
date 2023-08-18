@@ -98,7 +98,7 @@ int main()
 
 	// 0. create depth cubemap transformation matrices
 	float near_plane = 1.0f;
-	float far_plane = 8.5f;
+	float far_plane = 25.0f;
 	glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), float(SHADOW_WIDTH)/float(SHADOW_HEIGHT), near_plane, far_plane);
 
 	std::vector<glm::vec3> directions = {
@@ -116,14 +116,11 @@ int main()
 		shadowTransforms.emplace_back(shadowProj * glm::lookAt(lightPos, lightPos + directions[i], upVectors[i]));	
 
 	while (!glfwWindowShouldClose(window)) {
-		float currentFrame = static_cast<float>(glfwGetTime());
+		float currentFrame = (float)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
 		ProcessInput(window);
-
-		// move light position over time
-		//lightPos.z = static_cast<float>(sin(glfwGetTime() * 0.5) * 3.0);
 
 		glClearColor(0.5f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -135,6 +132,7 @@ int main()
 		simpleDepthShader.Bind();
 		for (unsigned int i = 0; i < 6; ++i)
 			simpleDepthShader.SetMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+
 		simpleDepthShader.SetFloat("far_plane", far_plane);
 		simpleDepthShader.SetVec3("lightPos", lightPos);
 		RenderScene(simpleDepthShader);
