@@ -16,6 +16,7 @@ void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const char* path);
 void RenderScene(Shader& shader);
 void RenderCube();
+void RenderSphere();
 
 // Scene settings
 constexpr int SCR_WIDTH = 800;
@@ -164,7 +165,7 @@ int main()
 		lightShader.SetMat4("projection", projection);
 		lightShader.SetMat4("view", view);
 		lightShader.SetMat4("model", model_temp);
-		RenderCube();
+		RenderSphere();
 
 		// Debug information
 		std::cout << "render mode: " << (shadows ? "point shadow\n" : "origin\n");
@@ -223,11 +224,12 @@ void RenderScene(Shader& shader)
 }
 
 // renderCube() renders a 1x1 3D cube in NDC.
-unsigned int cubeVAO = 0;
-unsigned int cubeVBO = 0;
 void RenderCube()
 {
-	// initialize (if necessary)
+	static unsigned int cubeVAO = 0;
+	static unsigned int cubeVBO;
+
+	// Preventing redefinition
 	if (cubeVAO == 0) {
 		float vertices[] = {
 			// back face
@@ -292,6 +294,76 @@ void RenderCube()
 	// render Cube
 	glBindVertexArray(cubeVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+}
+
+void RenderSphere()
+{
+	static unsigned int sphereVAO = 0;
+	static unsigned int sphereVBO, sphereEBO;
+
+	// Preventing redefinition
+	if (sphereVAO == 0) {
+		glGenVertexArrays(1, &sphereVAO);
+
+		glGenBuffers(1, &sphereVBO);
+		glGenBuffers(1, &sphereEBO);
+
+		std::vector<float> vertices;
+		std::vector<unsigned int> indices;
+
+		const unsigned int X_SEGMENTS = 64;
+		const unsigned int Y_SEGMENTS = 64;
+		const float PI = 3.14159265359;
+		float radius = 2.0f;
+		for (unsigned int y = 0; y <= Y_SEGMENTS; ++y) {
+			for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
+				float xSegment = (float)x / (float)X_SEGMENTS;
+				float ySegment = (float)y / (float)Y_SEGMENTS;
+				float xPos = radius * std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
+				float yPos = radius * std::cos(ySegment * PI);
+				float zPos = radius * std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
+
+				vertices.push_back(xPos);
+				vertices.push_back(yPos);
+				vertices.push_back(zPos);
+				vertices.push_back(xSegment);
+				vertices.push_back(ySegment);
+			}
+		}
+
+		bool oddRow = false;
+		for (unsigned int y = 0; y < Y_SEGMENTS; ++y) {
+			if (!oddRow) {
+				// even rows: y == 0, y == 2; and so on 
+				for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
+					indices.push_back(y * (X_SEGMENTS + 1) + x);
+					indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
+				}
+			}
+			else {
+				for (int x = X_SEGMENTS; x >= 0; --x) {
+					indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
+					indices.push_back(y * (X_SEGMENTS + 1) + x);
+				}
+			}
+			oddRow = !oddRow;
+		}
+
+		glBindVertexArray(sphereVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, sphereVBO);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereEBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+		glBindVertexArray(0);
+	}
+
+	glBindVertexArray(sphereVAO);
+	glDrawElements(GL_TRIANGLE_STRIP, (64 + 1) * 64 * 2, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
