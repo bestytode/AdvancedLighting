@@ -18,7 +18,10 @@ void main()
     gl_Position = projection * view * model * vec4(aPos, 1.0f);
     FragPos = vec3(model * vec4(aPos, 1.0));
 
-    if(reverse_normals) // a slight hack to make sure the outer large cube displays lighting from the 'inside' instead of the default 'outside'.
+    // Adjusts the normals to render the inside surface of the cube, 
+    // allowing proper lighting calculations as if you're looking from the inside of the cube, 
+    // rather than the default outside view.
+    if(reverse_normals) 
         Normal = transpose(inverse(mat3(model))) * (-1.0 * aNormal);
     else
         Normal = transpose(inverse(mat3(model))) * aNormal;

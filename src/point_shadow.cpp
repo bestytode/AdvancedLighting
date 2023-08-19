@@ -86,7 +86,7 @@ int main()
 	// Shaders & textures configs
 	Shader shader("res/shaders/point_shadow.vs", "res/shaders/point_shadow.fs");
 	Shader simpleDepthShader("res/shaders/point_shadow_depth.vs", "res/shaders/point_shadow_depth.fs", "res/shaders/point_shadow_depth.gs");
-
+	Shader lightShader("res/shaders/light.vs", "res/shaders/light.fs");
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
 
 	shader.Bind();
@@ -146,8 +146,6 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
-
-		// set lighting uniforms
 		shader.SetVec3("lightPos", lightPos);
 		shader.SetVec3("viewPos", camera.position);
 		shader.SetInt("shadows", shadows); // enable/disable shadows by pressing 'SPACE'
@@ -158,7 +156,18 @@ int main()
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 		RenderScene(shader);
 
-		std::cout << "render mode: " << (shadows ? "point shadow" : "origin") << std::endl;
+		// Light 
+		lightShader.Bind();
+		glm::mat4 model_temp(1.0f);
+		model_temp = glm::translate(model_temp, lightPos);
+		model_temp = glm::scale(model_temp, glm::vec3(0.1f));
+		lightShader.SetMat4("projection", projection);
+		lightShader.SetMat4("view", view);
+		lightShader.SetMat4("model", model_temp);
+		RenderCube();
+
+		// Debug information
+		std::cout << "render mode: " << (shadows ? "point shadow\n" : "origin\n");
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -167,18 +176,17 @@ int main()
 	glfwTerminate();
 }
 
-// renders the 3D scene
-// --------------------
+// Renders the 3D scene, accepting a shader as parameter
 void RenderScene(Shader& shader)
 {
 	// room cube
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::scale(model, glm::vec3(5.0f));
 	shader.SetMat4("model", model);
-	glDisable(GL_CULL_FACE); // note that we disable culling here since we render 'inside' the cube instead of the usual 'outside' which throws off the normal culling methods.
-	shader.SetInt("reverse_normals", 1); // A small little hack to invert normals when drawing cube from the inside so lighting still works.
+	glDisable(GL_CULL_FACE); // Disable culling here since we render 'inside' the cube
+	shader.SetInt("reverse_normals", 1); 
 	RenderCube();
-	shader.SetInt("reverse_normals", 0); // and of course disable it
+	shader.SetInt("reverse_normals", 0); 
 	glEnable(GL_CULL_FACE);
 
 	// cubes
@@ -215,14 +223,12 @@ void RenderScene(Shader& shader)
 }
 
 // renderCube() renders a 1x1 3D cube in NDC.
-// -------------------------------------------------
 unsigned int cubeVAO = 0;
 unsigned int cubeVBO = 0;
 void RenderCube()
 {
 	// initialize (if necessary)
-	if (cubeVAO == 0)
-	{
+	if (cubeVAO == 0) {
 		float vertices[] = {
 			// back face
 			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
@@ -303,8 +309,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	float xpos = static_cast<float>(xposIn);
 	float ypos = static_cast<float>(yposIn);
 
-	if (firstMouse)
-	{
+	if (firstMouse) {
 		lastX = xpos;
 		lastY = ypos;
 		firstMouse = false;
@@ -350,8 +355,7 @@ void ProcessInput(GLFWwindow* window)
 	}
 }
 
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
+// Utility function for loading a 2D texture from file
 unsigned int LoadTexture(char const* path)
 {
 	unsigned int textureID;
