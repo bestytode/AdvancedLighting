@@ -325,12 +325,15 @@ void RenderSphere()
 				float yPos = radius * std::cos(ySegment * PI);
 				float zPos = radius * std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
 
+				// Normalizing the normal
+				float norm = std::sqrt(xPos * xPos + yPos * yPos + zPos * zPos);
+
 				vertices.push_back(xPos); // Position
 				vertices.push_back(yPos);
-				vertices.push_back(xPos);
-				vertices.push_back(zPos); // Normal
-				vertices.push_back(yPos);
 				vertices.push_back(zPos);
+				vertices.push_back(xPos / norm); // Normal
+				vertices.push_back(yPos / norm);
+				vertices.push_back(zPos / norm);
 				vertices.push_back(xSegment); // UV coords
 				vertices.push_back(ySegment);
 			}
