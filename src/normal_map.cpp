@@ -14,13 +14,15 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path);
+void RenderQuad(Shader& shader);
+void RenderLightSource(Shader& shader);
 
 // Scene settings
 constexpr int SCR_WIDTH = 800;
 constexpr int SCR_HEIGHT = 600;
 
 // Camera settings
-Camera camera(0.0f, 0.0f, 3.0f);
+Camera camera(0.0f, 1.0f, 1.0f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -56,7 +58,76 @@ int main()
 		std::cerr << e.what() << std::endl;
 		return -1;
 	}
+	
+	// Load texture(s)
+	unsigned int texture_diffuse = LoadTexture("res/textures/brickwall.jpg");
+	unsigned int texture_normal = LoadTexture("res/textures/brickwall_normal.jpg");
 
+	// Shader configs
+	Shader shader("res/shaders/normal_map.vs", "res/shaders/normal_map.fs");
+	Shader lightShader("res/shaders/light.vs", "res/shaders/light.fs");
+
+	shader.Bind();
+	shader.SetInt("texture_diffuse", 0);
+	shader.SetInt("texture_normal", 1);
+
+	// lighting info
+	glm::vec3 lightPos(0.0f, 1.0f, 1.0f);
+
+	int counter = 0;
+	const int maxPrints = 50;
+	while (!glfwWindowShouldClose(window)) {
+		// Per-frame logic
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		if (counter < maxPrints) {
+			std::cout << "fps: " << 1.0f / deltaTime << "\n";
+			counter++;
+		}
+
+		// Render
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Process input
+		ProcessInput(window);
+
+		// render our squad using normal map
+		shader.Bind();
+		glEnable(GL_CULL_FACE);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture_diffuse);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture_normal);
+
+		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 model = glm::mat4(1.0f);
+
+		shader.SetMat4("projection", projection);
+		shader.SetMat4("view", view);
+		shader.SetMat4("model", model);
+		shader.SetVec3("lightPos", lightPos);
+		shader.SetVec3("viewPos", camera.position);
+		RenderQuad(shader);
+
+		// Render the light source for debugging
+		glDisable(GL_CULL_FACE);
+		lightShader.Bind();
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.5f));
+		lightShader.SetMat4("projection", projection);
+		lightShader.SetMat4("view", view);
+		lightShader.SetMat4("model", model);
+		RenderLightSource(lightShader);
+
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwTerminate();
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -144,4 +215,114 @@ unsigned int LoadTexture(const std::string& path)
 	}
 
 	return textureID;
+}
+
+
+void RenderQuad(Shader& shader) 
+{
+	// Define vertices for a 10x10 quad
+	// Note: This example regenerates vertices and indices every time for simplicity.
+	// For performance-critical applications, consider optimizing this.
+	float quadVertices[] = {
+		// positions        // texture coordinates
+		0.0f,  10.0f, 0.0f,  0.0f, 1.0f,
+		10.0f, 10.0f, 0.0f,  1.0f, 1.0f,
+		10.0f, 0.0f,  0.0f,  1.0f, 0.0f,
+		0.0f,  0.0f,  0.0f,  0.0f, 0.0f
+	};
+
+	unsigned int quadIndices[] = {
+	    2, 1, 0,
+	    0, 3, 2
+	};
+
+	unsigned int VAO, VBO, EBO;
+
+	// Generate and configure buffer objects
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Texture coordinate attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// Render the quad
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+	// Delete the VAO and VBOs
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+}
+
+void RenderLightSource(Shader& shader) 
+{
+	// NOTE: This function will generate vertices and indices every single time it's called.
+	// For a small project like this, the overhead is negligible, but for larger projects,
+	// you might want to optimize this.
+
+	// Define vertices for a 1x1x1 cube centered at origin
+	float vertices[] = {
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f
+	};
+
+	unsigned int indices[] = {
+		0, 1, 2, 2, 3, 0,
+		4, 5, 6, 6, 7, 4,
+		0, 1, 5, 5, 4, 0,
+		2, 3, 7, 7, 6, 2,
+		0, 3, 7, 7, 4, 0,
+		1, 2, 6, 6, 5, 1
+	};
+
+	unsigned int VAO, VBO, EBO;
+
+	// Generate and configure buffer objects
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Render the cube
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+	// Delete the VAO and VBOs
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 }

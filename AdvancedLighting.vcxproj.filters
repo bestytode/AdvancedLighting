@@ -35,6 +35,12 @@
     <Image Include="res\textures\wood.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\textures\brickwall.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\textures\brickwall_normal.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\blinn_phong.vs" />

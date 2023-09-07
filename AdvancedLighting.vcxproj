@@ -158,6 +158,8 @@
     <ClInclude Include="src\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\textures\brickwall.jpg" />
+    <Image Include="res\textures\brickwall_normal.jpg" />
     <Image Include="res\textures\wood.png" />
   </ItemGroup>
   <ItemGroup>
