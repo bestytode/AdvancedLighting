@@ -22,7 +22,7 @@ constexpr int SCR_WIDTH = 800;
 constexpr int SCR_HEIGHT = 600;
 
 // Camera settings
-Camera camera(0.0f, 1.0f, 1.0f);
+Camera camera(0.0f, 0.0f, 5.0f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -73,7 +73,7 @@ int main()
 	shader.SetInt("texture_normal", 1);
 
 	// lighting info
-	glm::vec3 lightPos(1.0f, 1.0f, 0.5f);
+	glm::vec3 lightPos(5.0f, 5.0f, 0.5f);
 
 	int counter = 0;
 	const int maxPrints = 50;
@@ -104,7 +104,7 @@ int main()
 		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
-
+		model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(1, 0, 0));
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
 		shader.SetMat4("model", model);
@@ -114,6 +114,7 @@ int main()
 
 		// Render the light source for debugging
 		lightShader.Bind();
+		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
 		lightShader.SetMat4("projection", projection);

@@ -88,32 +88,27 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<unsigned int>indices;
 	std::vector<Texture>textures;
 
-	// vertices
 	for (size_t i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex;
 
-		// we declare a placeholder vector since assimp uses its own vector class 
-		// that doesn't directly convert to glm's vec3 class.
-		glm::vec3 vector(1.0f);
-		vector.x = mesh->mVertices[i].x;
-		vector.y = mesh->mVertices[i].y;
-		vector.z = mesh->mVertices[i].z;
-		vertex.position = vector;
+		// Positions
+		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 
-		if (mesh->HasNormals()) {
-			vector.x = mesh->mNormals[i].x;
-			vector.y = mesh->mNormals[i].y;
-			vector.z = mesh->mNormals[i].z;
-			vertex.normal = vector;
+		// Normals
+		if (mesh->HasNormals()) 
+			vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+		
+		// Texture Coordinates
+		if (mesh->mTextureCoords[0]) 
+			vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+		else 
+			vertex.texCoords = glm::vec2(0.0f, 0.0f);
+		
+		// Tangents and Bitangents
+		if (mesh->HasTangentsAndBitangents()) {
+			vertex.Tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+			vertex.Bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
 		}
-		if (mesh->mTextureCoords[0]) {
-			glm::vec2 vec;
-			vec.x = mesh->mTextureCoords[0][i].x;
-			vec.y = mesh->mTextureCoords[0][i].y;
-			vertex.texCoords = vec;
-		}
-		else
-			vertex.texCoords = glm::vec2(0.0f);
 
 		vertices.push_back(vertex);
 	}

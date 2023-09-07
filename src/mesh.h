@@ -12,6 +12,8 @@ struct Vertex
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 texCoords;
+	glm::vec3 Tangent;
+	glm::vec3 Bitangent;
 };
 
 struct Texture
@@ -58,10 +60,10 @@ Mesh::Mesh(const std::vector<Vertex>& _vertices,
 void Mesh::Draw(Shader& shader) const
 {
 	// Start from material.diffuse1 or material.specular1
-	size_t diffuseNr = 1, specularNr = 1;
+	size_t diffuseNr = 1, specularNr = 1, normalNr = 1, heightNr = 1;
 
 	for (size_t i = 0; i < textures.size(); i++) {
-		glActiveTexture(GL_TEXTURE0 + i); 
+		glActiveTexture(GL_TEXTURE0 + i);
 		// Get texture number£¨N in diffuse_textureN £©
 		std::string number;
 		std::string name = textures[i].type;
@@ -69,6 +71,10 @@ void Mesh::Draw(Shader& shader) const
 			number = std::to_string(diffuseNr++);
 		else if (name == "texture_specular")
 			number = std::to_string(specularNr++);
+		else if (name == "texture_normal")
+			number = std::to_string(normalNr++);
+		else if (name == "texture_height")
+			number = std::to_string(heightNr++);
 
 		shader.SetInt((name + number).c_str(), i);
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
@@ -106,6 +112,14 @@ void Mesh::SetupMesh()
 	// TexCoords
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+
+	// vertex tangent
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+
+	// vertex bitangent
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
 	// Unbind VAO
 	glBindVertexArray(0);
