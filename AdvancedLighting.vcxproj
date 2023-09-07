@@ -169,6 +169,8 @@
     <None Include="res\shaders\gamma_correction.vs" />
     <None Include="res\shaders\light.fs" />
     <None Include="res\shaders\light.vs" />
+    <None Include="res\shaders\normal_map.fs" />
+    <None Include="res\shaders\normal_map.vs" />
     <None Include="res\shaders\point_shadow.fs" />
     <None Include="res\shaders\point_shadow.vs" />
     <None Include="res\shaders\point_shadow_depth.fs" />
@@ -180,7 +182,7 @@
     <None Include="res\shaders\shadow_map_depth.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\point_shadow.cpp" />
+    <ClCompile Include="src\normal_map.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

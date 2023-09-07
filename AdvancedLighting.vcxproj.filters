@@ -54,9 +54,11 @@
     <None Include="res\shaders\point_shadow.vs" />
     <None Include="res\shaders\point_shadow.fs" />
     <None Include="res\shaders\point_shadow_depth.gs" />
+    <None Include="res\shaders\normal_map.vs" />
+    <None Include="res\shaders\normal_map.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\point_shadow.cpp">
+    <ClCompile Include="src\normal_map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
