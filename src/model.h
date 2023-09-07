@@ -73,7 +73,11 @@ inline void Model::ProcessNode(aiNode* currentNode, const aiScene* scene)
 		// mMeshes in node store the index,
 		// where mMeshes in scene hold the actual objects
 		aiMesh* mesh = scene->mMeshes[currentNode->mMeshes[i]];
-		meshes.push_back(ProcessMesh(mesh, scene));
+
+		// Using emplace_back to construct a Mesh object in-place at the end of the meshes vector.
+		// The ProcessMesh function returns a Mesh object, and its ownership is transferred
+		// to the vector using move semantics (via the Mesh object's move constructor).
+		meshes.emplace_back(ProcessMesh(mesh, scene));
 	}
 
 	for (size_t i = 0; i < currentNode->mNumChildren; i++) {
@@ -88,6 +92,7 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<unsigned int>indices;
 	std::vector<Texture>textures;
 
+	// Process vertices
 	for (size_t i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex;
 
@@ -95,15 +100,15 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 
 		// Normals
-		if (mesh->HasNormals()) 
+		if (mesh->HasNormals())
 			vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-		
+
 		// Texture Coordinates
-		if (mesh->mTextureCoords[0]) 
+		if (mesh->mTextureCoords[0])
 			vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-		else 
+		else
 			vertex.texCoords = glm::vec2(0.0f, 0.0f);
-		
+
 		// Tangents and Bitangents
 		if (mesh->HasTangentsAndBitangents()) {
 			vertex.Tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
@@ -113,11 +118,7 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		vertices.push_back(vertex);
 	}
 
-	// indices
-	// 
-	// Each mesh has an array of faces.
-	// Each face represents a single primitive(triangle here)
-	// A face contains the indices of the vertices.
+	// Process indices
 	for (size_t i = 0; i < mesh->mNumFaces; i++) {
 		aiFace face = mesh->mFaces[i];
 		for (size_t j = 0; j < face.mNumIndices; j++) {
@@ -125,34 +126,28 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		}
 	}
 
-	// textures
-	// 
-	// we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
-	// Same applies to other texture as the following list summarizes:
-	// diffuse: texture_diffuseN
-	// specular: texture_specularN
-	// normal: texture_normalN
+	// Process textures based on shader naming conventions
 	if (mesh->mMaterialIndex >= 0) {
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
 		// 1. diffuse maps
 		std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
 		// 2. specular maps
 		std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-
 		// 3. normal maps
 		std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-
 		// 4. height maps
 		std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 	}
-	return Mesh(vertices, indices, textures);
+
+	if (mesh->HasTangentsAndBitangents())
+		return Mesh(vertices, indices, textures, true);
+	else
+		return Mesh(vertices, indices, textures, false);
 }
 
 // Return a vector contains Texture, retriving texture information from aiMaterial to our own textures and textures_loaded
