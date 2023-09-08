@@ -52,7 +52,8 @@ private:
 void Model::LoadModel(const std::string& _filePath)
 {
 	Assimp::Importer import;
-	const aiScene* scene = import.ReadFile(_filePath, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene* scene = import.ReadFile(_filePath, 
+		aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 #ifdef _DEBUG
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
