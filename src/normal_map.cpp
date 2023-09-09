@@ -108,6 +108,7 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(1, 0, 0));
+
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
 		shader.SetMat4("model", model);
@@ -120,6 +121,7 @@ int main()
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
 		model = glm::scale(model, glm::vec3(0.2f));
+
 		lightShader.SetMat4("projection", projection);
 		lightShader.SetMat4("view", view);
 		lightShader.SetMat4("model", model);
