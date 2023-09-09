@@ -74,7 +74,7 @@ int main()
 	shader.SetInt("texture_normal", 1);
 
 	// lighting info
-	glm::vec3 lightPos(5.0f, 5.0f, 0.5f);
+	glm::vec3 lightPos(5.0f, 5.0f, -3.5f);
 
 	int counter = 0;
 	const int maxPrints = 50;
@@ -114,6 +114,7 @@ int main()
 		shader.SetMat4("model", model);
 		shader.SetVec3("lightPos", lightPos);
 		shader.SetVec3("viewPos", camera.position);
+		shader.SetFloat("lightIntensity", 2.3f);
 		RenderQuad();
 
 		// Render the light source for debugging
@@ -223,23 +224,23 @@ unsigned int LoadTexture(const std::string& path)
 }
 
 
-void RenderQuad() 
+void RenderQuad()
 {
 	// Define vertices for a 10x10 quad
 	// Note: This example regenerates vertices and indices every time for simplicity.
 	// For performance-critical applications, consider optimizing this.
 	float quadVertices[] = {
-		// positions        // texture coordinates
-		0.0f,  10.0f, 0.0f,  0.0f, 1.0f,
-		10.0f, 10.0f, 0.0f,  1.0f, 1.0f,
-		10.0f, 0.0f,  0.0f,  1.0f, 0.0f,
-		0.0f,  0.0f,  0.0f,  0.0f, 0.0f
+		// positions        // normals          // texture coordinates  // tangents           // bitangents
+		0.0f,  10.0f, 0.0f,  0.0f, 0.0f, 1.0f,    0.0f, 1.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
+		10.0f, 10.0f, 0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 1.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
+		10.0f, 0.0f,  0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 0.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
+		0.0f,  0.0f,  0.0f,  0.0f, 0.0f, 1.0f,    0.0f, 0.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f
 	};
 
 	// CCW order
 	unsigned int quadIndices[] = {
-	    2, 1, 0,
-	    0, 3, 2
+		2, 1, 0,
+		0, 3, 2
 	};
 
 	unsigned int VAO, VBO, EBO;
@@ -258,12 +259,24 @@ void RenderQuad()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// Texture coordinate attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	// Normal attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// Texture coordinate attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	// Tangent attribute
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+
+	// Bitangent attribute
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
+	glEnableVertexAttribArray(4);
 
 	// Render the quad
 	glBindVertexArray(VAO);
@@ -275,6 +288,7 @@ void RenderQuad()
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 }
+
 
 // renderCube() renders a 1x1 3D cube in NDC.
 void RenderCube()
