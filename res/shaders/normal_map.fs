@@ -34,6 +34,7 @@ void main()
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
 	vec3 specular = vec3(0.2) * spec;
 
+	// Use lightIntensity to control light, ambient keeps the same
 	vec3 lighting = ambient + lightIntensity * (diffuse + specular);
 	FragColor = vec4(lighting, 1.0);
 }
