@@ -51,7 +51,7 @@ int main()
 		if (glewInit() != GLEW_OK)
 			throw std::runtime_error("failed to init glew");
 
-		// OpenGL global status settings
+		// OpenGL global status settings here
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 	}
@@ -68,6 +68,7 @@ int main()
 	Shader shader("res/shaders/normal_map.vs", "res/shaders/normal_map.fs");
 	Shader lightShader("res/shaders/light.vs", "res/shaders/light.fs");
 
+	// Bind texture units
 	shader.Bind();
 	shader.SetInt("texture_diffuse", 0);
 	shader.SetInt("texture_normal", 1);
@@ -82,6 +83,8 @@ int main()
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+
+		// fps printing
 		if (counter < maxPrints) {
 			std::cout << "fps: " << 1.0f / deltaTime << "\n";
 			counter++;
