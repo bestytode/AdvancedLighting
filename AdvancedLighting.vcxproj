@@ -184,7 +184,7 @@
     <None Include="res\shaders\shadow_map_depth.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\normal_map.cpp" />
+    <ClCompile Include="src\parallax_map.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

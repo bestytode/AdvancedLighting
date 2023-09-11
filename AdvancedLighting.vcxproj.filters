@@ -64,7 +64,7 @@
     <None Include="res\shaders\normal_map.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\normal_map.cpp">
+    <ClCompile Include="src\parallax_map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
