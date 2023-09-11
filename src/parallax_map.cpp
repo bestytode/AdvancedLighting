@@ -15,11 +15,13 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path);
 void RenderQuad();
+void RenderCube();
 
 // Scene settings
 constexpr int SCR_WIDTH = 800;
-constexpr int SCR_HEIGHT = 600;
-constexpr float height_scale = 0.1f;
+constexpr int SCR_HEIGHT = 800;
+bool parallax = true;
+bool parallaxKeyPressed = false;
 
 // Camera settings
 Camera camera(0.0f, 0.0f, 5.0f);
@@ -61,12 +63,13 @@ int main()
 	}
 
 	// Build & compile shader(s)
-	Shader shader("res/shaders/parallax_map.vs", "res/shaders/parallax_map,fs");
+	Shader shader("res/shaders/parallax_map.vs", "res/shaders/parallax_map.fs");
+	Shader lightShader("res/shaders/light.vs", "res/shaders/light.fs");
 
 	// Load texture(s)
-	unsigned int diffuseMap = LoadTexture("...");
-	unsigned int normalMap = LoadTexture("...");
-	unsigned int heightMap = LoadTexture("...");
+	unsigned int diffuseMap = LoadTexture("res/textures/bricks2.jpg");
+	unsigned int normalMap = LoadTexture("res/textures/bricks2_normal.jpg");
+	unsigned int heightMap = LoadTexture("res/textures/bricks2_disp.jpg");
 
 	shader.Bind();
 	shader.SetInt("diffuseMap", 0);
@@ -74,7 +77,7 @@ int main()
 	shader.SetInt("heightMap", 2);
 
 	// lighting info
-	glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
+	glm::vec3 lightPos(0.5f, 0.5f, 0.2f);
 
 	int counter = 0;
 	const int maxPrints = 50;
@@ -101,14 +104,16 @@ int main()
 		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_HEIGHT / (float)SCR_WIDTH, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
-
+		//model = glm::rotate(model, 0.1f * (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+		shader.Bind();
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
 		shader.SetMat4("model", model);
 		
 		shader.SetVec3("viewPos", camera.position);
 		shader.SetVec3("lightPos", lightPos);
-		shader.SetFloat("height_scale", height_scale);
+		shader.SetFloat("height_scale", 0.1f);
+		shader.SetInt("parallax", parallax);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -120,8 +125,16 @@ int main()
 		RenderQuad();
 
 		// Render light source
-		// todo
-		// 
+		lightShader.Bind();
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.05f));
+
+		lightShader.SetMat4("projection", projection);
+		lightShader.SetMat4("view", view);
+		lightShader.SetMat4("model", model);
+		RenderCube();
+
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -179,6 +192,14 @@ void ProcessInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !parallaxKeyPressed) {
+		parallax = !parallax;
+		parallaxKeyPressed = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE == GLFW_PRESS)) {
+		parallaxKeyPressed = false;
+	}
 }
 
 // Utility function for loading a 2D texture from file
@@ -225,9 +246,9 @@ void RenderQuad()
 	// For performance-critical applications, consider optimizing this.
 	float quadVertices[] = {
 		// positions        // normals          // texture coordinates  // tangents           // bitangents
-		0.0f,  10.0f, 0.0f,  0.0f, 0.0f, 1.0f,    0.0f, 1.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
-		10.0f, 10.0f, 0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 1.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
-		10.0f, 0.0f,  0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 0.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
+		0.0f,  1.0f, 0.0f,  0.0f, 0.0f, 1.0f,    0.0f, 1.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 1.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
+		1.0f, 0.0f,  0.0f,  0.0f, 0.0f, 1.0f,    1.0f, 0.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f,
 		0.0f,  0.0f,  0.0f,  0.0f, 0.0f, 1.0f,    0.0f, 0.0f,            1.0f, 0.0f, 0.0f,     0.0f, 1.0f, 0.0f
 	};
 
@@ -281,4 +302,79 @@ void RenderQuad()
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
+}
+
+// renderCube() renders a 1x1 3D cube in NDC.
+void RenderCube()
+{
+	static unsigned int cubeVAO = 0;
+	static unsigned int cubeVBO;
+
+	// Preventing redefinition
+	if (cubeVAO == 0) {
+		float vertices[] = {
+			// back face
+			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+			 1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+			-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+			// front face
+			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+			 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+			-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+			// left face
+			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+			-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+			-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+			// right face
+			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+			 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+			 // bottom face
+			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			  1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			 -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			 // top face
+			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			  1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			  1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+			  1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			 -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+		};
+
+		glGenVertexArrays(1, &cubeVAO);
+		glGenBuffers(1, &cubeVBO);
+		// fill buffer
+		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// link vertex attributes
+		glBindVertexArray(cubeVAO);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+	// render Cube
+	glBindVertexArray(cubeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
 }

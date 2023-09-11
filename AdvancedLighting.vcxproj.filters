@@ -41,6 +41,15 @@
     <Image Include="res\textures\brickwall_normal.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\textures\bricks2.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\textures\bricks2_disp.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\textures\bricks2_normal.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\blinn_phong.vs" />
@@ -62,6 +71,8 @@
     <None Include="res\shaders\point_shadow_depth.gs" />
     <None Include="res\shaders\normal_map.vs" />
     <None Include="res\shaders\normal_map.fs" />
+    <None Include="res\shaders\parallax_map.vs" />
+    <None Include="res\shaders\parallax_map.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\parallax_map.cpp">

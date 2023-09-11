@@ -289,7 +289,6 @@ void RenderQuad()
 	glDeleteBuffers(1, &EBO);
 }
 
-
 // renderCube() renders a 1x1 3D cube in NDC.
 void RenderCube()
 {
