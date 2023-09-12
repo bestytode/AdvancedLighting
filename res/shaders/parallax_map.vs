@@ -5,7 +5,6 @@ layout (location = 2) in vec2 aTexCoords;
 layout (location = 3) in vec3 tangent;
 layout (location = 4) in vec3 bitangent;
 
-out vec3 FragPos;
 out vec2 TexCoords;
 out vec3 tangentLightPos;
 out vec3 tangentViewPos;
@@ -21,7 +20,7 @@ uniform vec3 viewPos;
 void main()
 {
     gl_Position = projection * view * model * vec4(position, 1.0f);
-    FragPos = vec3(model * vec4(position, 1.0));  
+    vec3 FragPos = vec3(model * vec4(position, 1.0));  
     TexCoords = aTexCoords;
 
     vec3 T   = normalize(mat3(model) * tangent);

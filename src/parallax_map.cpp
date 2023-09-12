@@ -55,7 +55,7 @@ int main()
 
 		// OpenGL global status settings here
 		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 	}
 	catch (const std::runtime_error& e) {
 		std::cerr << e.what() << std::endl;
@@ -105,6 +105,7 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
 		//model = glm::rotate(model, 0.1f * (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+
 		shader.Bind();
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
@@ -114,6 +115,11 @@ int main()
 		shader.SetVec3("lightPos", lightPos);
 		shader.SetFloat("height_scale", 0.1f);
 		shader.SetInt("parallax", parallax);
+
+		shader.SetFloat("lightIntensity", 0.85f);
+		shader.SetFloat("constant", 1.0f);
+		shader.SetFloat("linear", 0.09f);
+		shader.SetFloat("quadratic", 0.032f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -223,8 +229,8 @@ unsigned int LoadTexture(const std::string& path)
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
