@@ -63,17 +63,16 @@ vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
     return texCoords - viewDir.xy * (height * height_scale); // use minus here since we use depth map(not height map)        
 }
 
-// Apply multiple samples to improve accuracy
 vec2 SteepParallaxMapping(vec2 texCoords, vec3 viewDir)
 {
     // Dynamic layer adjustment using uniform variables
     float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
-    float deltaLayerDepth = 1.0f / numLayers;
 
     vec2 deltaTexCoords = viewDir.xy / (viewDir.z * numLayers);
+    float deltaLayerDepth = 1.0f / numLayers;
     vec2 currentTexCoords = texCoords;
     float currentLayerDepth = 0.0;
-    float currentHeight = 0.0f;
+    float currentHeight = 0.0;
 
     // Ray marching loop
     for (int i = 0; i < numLayers; ++i) {
@@ -83,13 +82,18 @@ vec2 SteepParallaxMapping(vec2 texCoords, vec3 viewDir)
             break;
         }
         currentTexCoords -= deltaTexCoords;
-        currentLayerDepth += 1.0 / numLayers;
+        currentLayerDepth += deltaLayerDepth;
     }
-    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
-    float afterDepth = currentLayerDepth - currentHeight;
-    float beforeDepth = currentLayerDepth - deltaLayerDepth - texture(depthMap, prevTexCoords).r * height_scale;
 
+    // Calculate depths for interpolation
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+    float afterDepth =  currentHeight - currentLayerDepth;
+    float beforeDepth = texture(depthMap, prevTexCoords).r * height_scale - currentLayerDepth + deltaLayerDepth;
+
+    // Interpolation weight
     float weight = afterDepth / (afterDepth - beforeDepth);
+
+    // Final texture coordinates
     vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
 
     return finalTexCoords;
