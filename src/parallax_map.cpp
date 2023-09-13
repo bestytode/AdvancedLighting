@@ -69,7 +69,7 @@ int main()
 	// Load texture(s)
 	unsigned int diffuseMap = LoadTexture("res/textures/bricks2.jpg");
 	unsigned int normalMap = LoadTexture("res/textures/bricks2_normal.jpg");
-	unsigned int heightMap = LoadTexture("res/textures/bricks2_disp.jpg");
+	unsigned int depthMap = LoadTexture("res/textures/bricks2_disp.jpg"); // Replacing height map by depth map instead
 
 	// Shader config(s)
 	shader.Bind();
@@ -94,6 +94,7 @@ int main()
 
 	int counter = 0;
 	const int maxPrints = 50;
+	//glPolygonMode(GL_FRONT, GL_LINE);
 	while (!glfwWindowShouldClose(window)) {
 		// Per-frame logic
 		float currentFrame = glfwGetTime();
@@ -127,14 +128,15 @@ int main()
 		shader.SetVec3("viewPos", camera.position);
 		shader.SetVec3("lightPos", lightPos);
 		shader.SetFloat("height_scale", 0.1f);
-		//shader.SetInt("parallax", parallax);
+		shader.SetFloat("minLayers", 5.0f);
+		shader.SetFloat("maxLayers", 10.0f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, normalMap);
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, heightMap);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
 
 		RenderQuad();
 
