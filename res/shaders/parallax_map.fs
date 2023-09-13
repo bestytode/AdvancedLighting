@@ -87,7 +87,7 @@ vec2 SteepParallaxMapping(vec2 texCoords, vec3 viewDir)
 
     // Calculate depths for interpolation
     vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
-    float afterDepth =  currentHeight - currentLayerDepth;
+    float afterDepth = currentHeight - currentLayerDepth;
     float beforeDepth = texture(depthMap, prevTexCoords).r * height_scale - currentLayerDepth + deltaLayerDepth;
 
     // Interpolation weight
