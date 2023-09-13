@@ -71,30 +71,26 @@ int main()
 	unsigned int normalMap = LoadTexture("res/textures/bricks2_normal.jpg");
 	unsigned int heightMap = LoadTexture("res/textures/bricks2_disp.jpg");
 
+	// Shader config(s)
 	shader.Bind();
 	shader.SetInt("diffuseMap", 0);
 	shader.SetInt("normalMap", 1);
-	shader.SetInt("heightMap", 2);
+	shader.SetInt("depthMap", 2);
+	shader.SetUniformBlock("LightProperties", 0);
 
 	// lighting info
 	glm::vec3 lightPos(0.5f, 0.5f, 0.2f);
+	float lightProperties[4] = { 
+		1.0f, 1.0f, 0.09f, 0.032f // lightIntensity, constant, linear, quadratic
+	}; 
 
-	// Create ubo
+	// Create UBO
 	unsigned int UBO;
 	glGenBuffers(1, &UBO);
 	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(float) * 4, NULL, GL_STATIC_DRAW); // 4 floats for lightIntensity, constant, linear, quadratic
+	glBufferData(GL_UNIFORM_BUFFER, 4 * sizeof(float), lightProperties, GL_STATIC_DRAW); // 4 floats for lightIntensity, constant, linear, quadratic
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-	int index = glGetUniformBlockIndex(shader.GetID(), "LightProperties");
-	glUniformBlockBinding(shader.GetID(), index, 0);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
-
-	// Update UBO data
-	float lightProperties[4] = { 1.0f, 1.0f, 0.09f, 0.032f }; // lightIntensity, constant, linear, quadratic
-	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lightProperties), lightProperties);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	int counter = 0;
 	const int maxPrints = 50;
@@ -131,7 +127,7 @@ int main()
 		shader.SetVec3("viewPos", camera.position);
 		shader.SetVec3("lightPos", lightPos);
 		shader.SetFloat("height_scale", 0.1f);
-		shader.SetInt("parallax", parallax);
+		//shader.SetInt("parallax", parallax);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);

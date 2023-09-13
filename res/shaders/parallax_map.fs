@@ -25,6 +25,7 @@ void main()
 {
 	vec3 viewDir = normalize(tangentViewPos - tangentFragPos);
 
+    // Retrieving texCoords from depth(height) map
 	vec2 texCoords = ParallaxMapping(TexCoords, viewDir);
     if (texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0) 
         discard;
@@ -33,7 +34,7 @@ void main()
     vec3 normal = texture(normalMap, texCoords).rgb;
 	normal = normalize(normal * 2.0f - 1.0f);
 
-	// Get diffuse color
+	// Calculate ambient, diffuse and specular coefficients
     vec3 color = texture(diffuseMap, texCoords).rgb;
     vec3 ambient = 0.1 * color;
     vec3 lightDir = normalize(tangentLightPos - tangentFragPos);
@@ -42,7 +43,6 @@ void main()
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-
     vec3 specular = vec3(0.2) * spec;
 
     // Attenuation
