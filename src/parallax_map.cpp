@@ -79,6 +79,23 @@ int main()
 	// lighting info
 	glm::vec3 lightPos(0.5f, 0.5f, 0.2f);
 
+	// Create ubo
+	unsigned int UBO;
+	glGenBuffers(1, &UBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(float) * 4, NULL, GL_STATIC_DRAW); // 4 floats for lightIntensity, constant, linear, quadratic
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	int index = glGetUniformBlockIndex(shader.GetID(), "LightProperties");
+	glUniformBlockBinding(shader.GetID(), index, 0);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
+
+	// Update UBO data
+	float lightProperties[4] = { 1.0f, 1.0f, 0.09f, 0.032f }; // lightIntensity, constant, linear, quadratic
+	glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lightProperties), lightProperties);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	int counter = 0;
 	const int maxPrints = 50;
 	while (!glfwWindowShouldClose(window)) {
@@ -115,11 +132,6 @@ int main()
 		shader.SetVec3("lightPos", lightPos);
 		shader.SetFloat("height_scale", 0.1f);
 		shader.SetInt("parallax", parallax);
-
-		shader.SetFloat("lightIntensity", 0.85f);
-		shader.SetFloat("constant", 1.0f);
-		shader.SetFloat("linear", 0.09f);
-		shader.SetFloat("quadratic", 0.032f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);

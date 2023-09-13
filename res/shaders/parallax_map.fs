@@ -11,12 +11,13 @@ uniform sampler2D normalMap;
 uniform sampler2D depthMap;
 
 uniform float height_scale;
-uniform float lightIntensity;
 
-// Attenuation coefficients
-uniform float constant;
-uniform float linear;
-uniform float quadratic;
+layout (std140) uniform LightProperties {
+    float lightIntensity;
+    float constant;
+    float linear;
+    float quadratic;
+};
 
 vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir);
 
