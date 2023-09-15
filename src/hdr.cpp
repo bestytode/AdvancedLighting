@@ -98,21 +98,21 @@ int main()
 
 	// Configure and bind the color buffer texture
 	glBindTexture(GL_TEXTURE_2D, colorBuffer);
-	// Use GL_RGBA16F for HDR rendering to capture a wide range of brightness.
+	// Use GL_RGBA16F for HDR rendering to capture a wide range of brightness (greater than 1.0f).
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // Set wrap mode
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  // Set wrap mode
-	glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the color buffer texture
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);  // Unbind the renderbuffer
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
+	glBindTexture(GL_TEXTURE_2D, 0);  
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);  
 
 	// Generate and configure depth buffer (Renderbuffer)
 	unsigned int rboDepth;
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);  // Unbind the renderbuffer
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);  
 
 	// Attach color buffer and depth buffer to framebuffer
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
@@ -121,6 +121,7 @@ int main()
 	// Check if framebuffer is complete
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
+	else std::cout << "Framebuffer completed\n";
 
 	// Unbind the framebuffer to revert to default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -206,13 +207,16 @@ int main()
 		hdrShader.SetFloat("exposure", 5.0f);
 		glBindVertexArray(quadVAO);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	glBindVertexArray(0);
+	// Delete all resources of OpenGL
+	glDeleteBuffers(1, &quadVBO);
+	glDeleteVertexArrays(1, &quadVAO);
 	glfwTerminate();
 }
 

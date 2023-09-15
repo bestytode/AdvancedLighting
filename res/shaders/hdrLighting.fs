@@ -15,9 +15,9 @@ void main()
 {
 	vec3 color = texture(woodTexture, TexCoords).rgb;
 	vec3 normal = normalize(Normal);
-
 	vec3 lighting = vec3(0.0f);
 
+	// For learning purpose, we only apply diffuse here (without ambient and specular)
 	for (int i = 0; i < 4; i++) {
 		vec3 lightDir = normalize(lightPositions[i] - FragPos);
 		float diff = max(dot(lightDir, normal), 0.0);
