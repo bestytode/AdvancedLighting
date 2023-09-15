@@ -125,7 +125,6 @@ int main()
 	// Unbind the framebuffer to revert to default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	
     // Light positions
 	std::vector<glm::vec3> lightPositions;
 	lightPositions.push_back(glm::vec3(0.0f, 0.0f, 49.5f)); // back light
