@@ -30,10 +30,10 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// hdr settings
+// Bloom settings
 // control them in ProcessInput()
-bool hdr = true;
-bool hdrKeyPressed = false;
+bool bloom = true;
+bool bloomKeyPressed = false;
 float exposure = 1.0f;
 
 int main()
@@ -65,7 +65,7 @@ int main()
 		return -1;
 	}
 
-	// Simple config for quad positions and texCoords
+	// Config quad VAO
 	float quadVertices[] = {
 		// positions        // texture Coords
 		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
@@ -73,6 +73,7 @@ int main()
 		 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
 		 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
 	};
+
 	unsigned int quadVAO, quadVBO;
 	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &quadVBO);
@@ -86,71 +87,42 @@ int main()
 	glBindVertexArray(0);
 
 	// Build & compile shader(s)
-	Shader shader("res/shaders/hdrLighting.vs", "res/shaders/hdrLighting.fs");
-	Shader hdrShader("res/shaders/hdr.vs", "res/shaders/hdr.fs");
+	Shader shader("res/shaders/bloom.vs", "res/shaders/bloom.fs");
+	Shader shaderLight("res/shaders/bloom.vs", "res/shaders/light_box.fs");
+	Shader shaderBlur("res/shaders/blur.vs", "res/shaders/blur.fs");
+	Shader shaderBloomFinal("res/shaders/bloom_final.vs", "res/shaders/bloom_final.fs");
 
 	// Load texture(s)
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
+	unsigned int containerTexture = LoadTexture("res/textures/container2.png");
 
-	// Generate and bind the HDR framebuffer
-	unsigned int hdrFBO;
-	glGenFramebuffers(1, &hdrFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+	// configure floating point framebuffers
+    // ---------------------------------------
+	// TODO
 
-	// Generate texture for color buffer
-	unsigned int colorBuffer;
-	glGenTextures(1, &colorBuffer);
-
-	// Configure and bind the color buffer texture
-	glBindTexture(GL_TEXTURE_2D, colorBuffer);
-	// Use GL_RGBA16F for HDR rendering to capture a wide range of brightness (greater than 1.0f).
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);  
-	glBindTexture(GL_TEXTURE_2D, 0);  
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);  
-
-	// Generate and configure depth buffer (Renderbuffer)
-	unsigned int rboDepth;
-	glGenRenderbuffers(1, &rboDepth);
-	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);  
-
-	// Attach color buffer and depth buffer to framebuffer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-
-	// Check if framebuffer is complete
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Framebuffer not complete!" << std::endl;
-	else std::cout << "Framebuffer completed\n";
-
-	// Unbind the framebuffer to revert to default framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Light positions
+	// Light positions
 	std::vector<glm::vec3> lightPositions;
-	lightPositions.push_back(glm::vec3(0.0f, 0.0f, 49.5f)); // back light
-	lightPositions.push_back(glm::vec3(-1.4f, -1.9f, 9.0f));
-	lightPositions.push_back(glm::vec3(0.0f, -1.8f, 4.0f));
-	lightPositions.push_back(glm::vec3(0.8f, -1.7f, 6.0f));
+	lightPositions.push_back(glm::vec3(0.0f, 0.5f, 1.5f));
+	lightPositions.push_back(glm::vec3(-4.0f, 0.5f, -3.0f));
+	lightPositions.push_back(glm::vec3(3.0f, 0.5f, 1.0f));
+	lightPositions.push_back(glm::vec3(-.8f, 2.4f, -1.0f));
 
-	// Light colors
+	// Lightcolors
 	std::vector<glm::vec3> lightColors;
-	lightColors.push_back(glm::vec3(200.0f, 200.0f, 200.0f));
-	lightColors.push_back(glm::vec3(0.1f, 0.0f, 0.0f));
-	lightColors.push_back(glm::vec3(0.0f, 0.0f, 0.2f));
-	lightColors.push_back(glm::vec3(0.0f, 0.1f, 0.0f));
+	lightColors.push_back(glm::vec3(5.0f, 5.0f, 5.0f));
+	lightColors.push_back(glm::vec3(10.0f, 0.0f, 0.0f));
+	lightColors.push_back(glm::vec3(0.0f, 0.0f, 15.0f));
+	lightColors.push_back(glm::vec3(0.0f, 5.0f, 0.0f));
 
-	// Config shader(s)
+	// Shader configs
 	shader.Bind();
-	shader.SetInt("woodTexture", 0);
-	hdrShader.Bind();
-	hdrShader.SetInt("hdrBuffer", 0);
-	
+	shader.SetInt("diffuseTexture", 0);
+	shaderBlur.Bind();
+	shaderBlur.SetInt("image", 0);
+	shaderBloomFinal.Bind();
+	shaderBloomFinal.SetInt("scene", 0);
+	shaderBloomFinal.SetInt("bloomBlur", 1);
+
 	int counter = 0;
 	const int maxPrints = 50;
 	while (!glfwWindowShouldClose(window)) {
@@ -173,58 +145,25 @@ int main()
 		ProcessInput(window);
 
 		// 1. render scene into floating point framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		shader.Bind();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 25.0));
-		model = glm::scale(model, glm::vec3(2.5f, 2.5f, 27.5f));
-		shader.SetMat4("projection", projection);
-		shader.SetMat4("view", view);
-		shader.SetMat4("model", model);
-		//shader.SetVec3("viewPos", camera.position);
-		shader.SetInt("inverse_normals", true);
+        // -----------------------------------------------
+		// TODO
 		
-		// Light uniforms
-		if (lightPositions.size() == lightColors.size()) {
-			for (int i = 0; i < lightPositions.size(); ++i) {
-				std::string posName = "lightPositions[" + std::to_string(i) + "]";
-				std::string colName = "lightColors[" + std::to_string(i) + "]";
-				shader.SetVec3(posName, lightPositions[i]);
-				shader.SetVec3(colName, lightColors[i]);
-			}
-		}
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, woodTexture);
-		RenderCube();
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		// 2. Render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		hdrShader.Bind();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, colorBuffer);
-		hdrShader.SetInt("hdr", hdr);
-		hdrShader.SetFloat("exposure", exposure);
-		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindVertexArray(0);
-
-		// Print HDR status and current exposure value to the console
-		std::cout << "HDR: " << (hdr ? "enabled" : "not enabled") << " | Current exposure value: " << exposure << std::endl;
+	    // 2. blur bright fragments with two-pass Gaussian Blur 
+		// --------------------------------------------------
+		// TODO
+		
+		// 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
+		// --------------------------------------------------------------------------------------------------------------------------
+		// TODO
+		
+		// Print the current state of the bloom effect and the exposure value to the console
+		std::cout << "bloom: " << (bloom ? "on " : "off ") << "| exposure: " << exposure << "\n";
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	// Delete all resources of OpenGL
-	glDeleteBuffers(1, &quadVBO);
-	glDeleteVertexArrays(1, &quadVAO);
 	glfwTerminate();
 }
 
@@ -278,12 +217,14 @@ void ProcessInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !hdrKeyPressed) {
-		hdr = !hdr;
-		hdrKeyPressed = true;
+	// Toggle bloom effect when 'SPACE' is pressed and prevent key repeat
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !bloomKeyPressed) {
+		bloom = !bloom;
+		bloomKeyPressed = true;
 	}
+	// Reset key repeat prevention flag when 'SPACE' is released
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-		hdrKeyPressed = false;
+		bloomKeyPressed = false;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
@@ -292,7 +233,7 @@ void ProcessInput(GLFWwindow* window)
 		else
 			exposure = 0.0f;
 	}
-	else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+	else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS){
 		exposure += 0.01f;
 	}
 }
