@@ -73,9 +73,13 @@
     <None Include="res\shaders\normal_map.fs" />
     <None Include="res\shaders\parallax_map.vs" />
     <None Include="res\shaders\parallax_map.fs" />
+    <None Include="res\shaders\hdr.vs" />
+    <None Include="res\shaders\hdr.fs" />
+    <None Include="res\shaders\hdrLighting.vs" />
+    <None Include="res\shaders\hdrLighting.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\parallax_map.cpp">
+    <ClCompile Include="src\hdr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

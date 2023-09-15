@@ -172,6 +172,10 @@
     <None Include="res\shaders\debug_quad.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
     <None Include="res\shaders\gamma_correction.vs" />
+    <None Include="res\shaders\hdr.fs" />
+    <None Include="res\shaders\hdr.vs" />
+    <None Include="res\shaders\hdrLighting.fs" />
+    <None Include="res\shaders\hdrLighting.vs" />
     <None Include="res\shaders\light.fs" />
     <None Include="res\shaders\light.vs" />
     <None Include="res\shaders\normal_map.fs" />
@@ -189,7 +193,7 @@
     <None Include="res\shaders\shadow_map_depth.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\parallax_map.cpp" />
+    <ClCompile Include="src\hdr.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
