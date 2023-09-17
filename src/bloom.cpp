@@ -9,6 +9,10 @@
 #include "geometry_renderers.h"
 #include "model.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 // Function declarations
 void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -64,6 +68,14 @@ int main()
 		std::cerr << e.what() << std::endl;
 		return -1;
 	}
+
+	// ImGui Initialization
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 330 core");
 
 	// Build & compile shader(s)
 	// shader: Renders the scene and extracts bright areas for bloom.
@@ -317,6 +329,20 @@ int main()
 		// Print the current state of the bloom effect and the exposure value to the console
 		std::cout << "bloom: " << (bloom ? "on " : "off ") << "| exposure: " << exposure << "\n";
 
+		// ImGui Frame Start
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		// ImGui GUI code
+		ImGui::Begin("Demo window");
+		ImGui::Text("Hello, world!");
+		ImGui::End();
+
+		// ImGui Rendering
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -325,6 +351,11 @@ int main()
 	// Optional: release all the resources of OpenGL (VAO, VBO, etc.)
 
 	glfwTerminate();
+
+	// ImGui Cleanup
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
