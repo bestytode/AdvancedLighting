@@ -1,6 +1,7 @@
 // This header file provides a collection of functions for easily rendering specific geometric shapes in OpenGL.
 // Note: Each function includes vertex attributes for position, normal, and texture coordinates.
-// Future updates may extend these functions to include tangents and bitangents.
+// Future updates may extend these functions to include tangents and bitangents, intergrated to a class,
+// so that we can release OpenGL resources more easily (we current not release those)
 //
 // Author: Zhenhuan Yu
 // Date: 2023/09/17
