@@ -312,7 +312,6 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
 		shaderBloomFinal.SetInt("bloom", bloom);
 		shaderBloomFinal.SetFloat("exposure", exposure);
-
 		yzh::RenderQuad();
 		
 		// Print the current state of the bloom effect and the exposure value to the console
