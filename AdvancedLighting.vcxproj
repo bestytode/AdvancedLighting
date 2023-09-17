@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\geometry_renderers.h" />
     <ClInclude Include="src\mesh.h" />
     <ClInclude Include="src\model.h" />
     <ClInclude Include="src\shader.h" />

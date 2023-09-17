@@ -7,6 +7,7 @@
 #include "camera.h"
 #include "model.h"
 #include "shader.h"
+#include "geometry_renderers.h"
 
 // Function declarations
 void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
@@ -14,7 +15,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path);
-void RenderCube();
 
 // Scene settings
 constexpr int SCR_WIDTH = 800;
@@ -64,27 +64,6 @@ int main()
 		std::cerr << e.what() << std::endl;
 		return -1;
 	}
-
-	// Config quad VAO
-	float quadVertices[] = {
-		// positions        // texture Coords
-		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-		 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-	};
-
-	unsigned int quadVAO, quadVBO;
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glBindVertexArray(0);
 
 	// Build & compile shader(s)
 	// shader: Renders the scene and extracts bright areas for bloom.
@@ -169,7 +148,7 @@ int main()
 	lightPositions.push_back(glm::vec3(3.0f, 0.5f, 1.0f));
 	lightPositions.push_back(glm::vec3(-.8f, 2.4f, -1.0f));
 
-	// Lightcolors
+	// Light colors
 	std::vector<glm::vec3> lightColors;
 	lightColors.push_back(glm::vec3(5.0f, 5.0f, 5.0f));
 	lightColors.push_back(glm::vec3(10.0f, 0.0f, 0.0f));
@@ -240,7 +219,7 @@ int main()
 		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
 		model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		// then create multiple cubes as the scenery
 		glBindTexture(GL_TEXTURE_2D, containerTexture);
@@ -248,38 +227,38 @@ int main()
 		model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
 		model = glm::scale(model, glm::vec3(0.5f));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0));
 		model = glm::scale(model, glm::vec3(0.5f));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0));
 		model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0));
 		model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
 		model = glm::scale(model, glm::vec3(1.25));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0));
 		model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0));
 		model = glm::scale(model, glm::vec3(0.5f));
 		shader.SetMat4("model", model);
-		RenderCube();
+		yzh::RenderCube();
 
 		// finally show all the light sources as bright cubes
 		// this is where actually the bloom affect happens
@@ -293,7 +272,7 @@ int main()
 			model = glm::scale(model, glm::vec3(0.05f));
 			shaderLight.SetMat4("model", model);
 			shaderLight.SetVec3("lightColor", lightColors[i]);
-			RenderCube();
+			yzh::RenderSphere();
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -313,9 +292,7 @@ int main()
 			// 3. Bind the texture to read from (either the bright parts or the result of the previous blur pass)
 			// Notice: when the first iteration, we read texture from colorBuffers[1]
 			glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
-			glBindVertexArray(quadVAO);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-			glBindVertexArray(0);
+			yzh::RenderQuad();
 			horizontal = !horizontal;
 			if (first_iteration)
 				first_iteration = false;
@@ -336,9 +313,7 @@ int main()
 		shaderBloomFinal.SetInt("bloom", bloom);
 		shaderBloomFinal.SetFloat("exposure", exposure);
 
-		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindVertexArray(0);
+		yzh::RenderQuad();
 		
 		// Print the current state of the bloom effect and the exposure value to the console
 		std::cout << "bloom: " << (bloom ? "on " : "off ") << "| exposure: " << exposure << "\n";
@@ -456,79 +431,4 @@ unsigned int LoadTexture(const std::string& path)
 	}
 
 	return textureID;
-}
-
-// renderCube() renders a 1x1 3D cube in NDC.
-void RenderCube()
-{
-	static unsigned int cubeVAO = 0;
-	static unsigned int cubeVBO;
-
-	// Preventing redefinition
-	if (cubeVAO == 0) {
-		float vertices[] = {
-			// back face
-			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
-			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
-			 1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
-			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
-			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
-			-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
-			// front face
-			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
-			 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
-			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
-			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
-			-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
-			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
-			// left face
-			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
-			-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
-			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
-			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
-			-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
-			// right face
-			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
-			 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
-			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
-			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
-			 // bottom face
-			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-			  1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
-			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-			 -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-			 // top face
-			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
-			  1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
-			  1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
-			  1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
-			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
-			 -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
-		};
-
-		glGenVertexArrays(1, &cubeVAO);
-		glGenBuffers(1, &cubeVBO);
-		// fill buffer
-		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		// link vertex attributes
-		glBindVertexArray(cubeVAO);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-	}
-	// render Cube
-	glBindVertexArray(cubeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
 }

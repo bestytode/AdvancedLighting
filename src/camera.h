@@ -14,8 +14,13 @@ enum CameraMovementDirection
     RIGHT     // D
 };
 
-// An abstract camera class that processes input and calculates 
-// the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
+// The Camera class provides functionalities for a 3D camera in OpenGL.
+// It handles camera movement through keyboard and mouse inputs, and 
+// calculates the corresponding view matrix for use in the shader.
+//
+// Usage Example:
+// Camera myCamera(glm::vec3(0.0f, 0.0f, 3.0f));
+// glm::mat4 view = myCamera.GetViewMatrix();
 class Camera
 {
 public:
