@@ -82,6 +82,11 @@
     <None Include="res\shaders\hdrLighting.fs" />
     <None Include="res\shaders\bloom.vs" />
     <None Include="res\shaders\bloom.fs" />
+    <None Include="res\shaders\blur.fs" />
+    <None Include="res\shaders\blur.vs" />
+    <None Include="res\shaders\bloom_light_box.fs" />
+    <None Include="res\shaders\bloom_final.vs" />
+    <None Include="res\shaders\bloom_final.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bloom.cpp">

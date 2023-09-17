@@ -21,7 +21,7 @@ constexpr int SCR_WIDTH = 800;
 constexpr int SCR_HEIGHT = 800;
 
 // Camera settings
-Camera camera(0.0f, 0.0f, 15.0f);
+Camera camera(0.0f, 0.0f, 5.0f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -87,8 +87,8 @@ int main()
 	glBindVertexArray(0);
 
 	// Build & compile shader(s)
-	Shader shader("res/shaders/bloom.vs", "res/shaders/bloom.fs");
-	Shader shaderLight("res/shaders/bloom.vs", "res/shaders/light_box.fs");
+	Shader shader("res/shaders/bloom.vs", "res/shaders/bloom.fs"); // generate both frag and bright color
+	Shader shaderLight("res/shaders/bloom.vs", "res/shaders/bloom_light_box.fs"); // for light source, same generating both frag and bright color
 	Shader shaderBlur("res/shaders/blur.vs", "res/shaders/blur.fs");
 	Shader shaderBloomFinal("res/shaders/bloom_final.vs", "res/shaders/bloom_final.fs");
 
@@ -134,7 +134,26 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// ping-pong-framebuffer for blurring
-	// todo
+	unsigned int pingpongFBO[2];
+	unsigned int pingpongColorbuffers[2];
+	glGenFramebuffers(2, pingpongFBO);
+	glGenTextures(2, pingpongColorbuffers);
+	for (size_t i = 0; i < 2; i++) {
+		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+		glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// clamp to the edge as the blur filter would otherwise sample repeated texture values
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+
+		// also check if framebuffers are complete (no need for depth buffer)
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "Framebuffer not complete!" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Light positions
 	std::vector<glm::vec3> lightPositions;
@@ -180,7 +199,14 @@ int main()
 		// Process input
 		ProcessInput(window);
 
-		// 1. render scene into floating point framebuffer
+		// Step 1: Render the Scene into a Floating-Point Framebuffer
+        // ----------------------------------------------------------
+        // In this step, we render the scene into a framebuffer with two color attachments.
+        // 'colorBuffers[0]' will store the standard HDR color data.
+        // 'colorBuffers[1]' will store only the bright parts of the scene, which will be used for the bloom effect.
+		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
@@ -188,7 +214,7 @@ int main()
 		shader.Bind();
 		shader.SetMat4("projection", projection);
 		shader.SetMat4("view", view);
-		shader.SetVec3("viewPos", camera.position);
+		//shader.SetVec3("viewPos", camera.position);
 
 		// Light uniforms
 		if (lightPositions.size() == lightColors.size()) {
@@ -249,6 +275,7 @@ int main()
 		RenderCube();
 
 		// finally show all the light sources as bright cubes
+		// this is where actually the bloom affect happens
 		shaderLight.Bind();
 		shaderLight.SetMat4("projection", projection);
 		shaderLight.SetMat4("view", view);
@@ -256,20 +283,55 @@ int main()
 		for (size_t i = 0; i < lightPositions.size(); i++) {
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, glm::vec3(lightPositions[i]));
-			model = glm::scale(model, glm::vec3(0.25f));
+			model = glm::scale(model, glm::vec3(0.05f));
 			shaderLight.SetMat4("model", model);
 			shaderLight.SetVec3("lightColor", lightColors[i]);
 			RenderCube();
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	    // 2. blur bright fragments with two-pass Gaussian Blur 
-		// --------------------------------------------------
-		// TODO
+		// Step 2: Apply Two-Pass Gaussian Blur to Bright Fragments
+        // --------------------------------------------------------
+        // This step is a post-processing stage, so we don't need to clear the color or depth buffers.
+        // We use two framebuffers (ping-pong technique) to alternate between horizontal and vertical blur passes.
+        // This allows us to read from one framebuffer while writing to the other, avoiding read-write conflicts.
+		bool horizontal = true, first_iteration = true;
+		int amount = 10;
+		shaderBlur.Bind();
+		for (size_t i = 0; i < amount; i++) {
+			// 1. Set the framebuffer to write the blurred output to
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+			// 2. Set the blur direction (horizontal or vertical)
+			shaderBlur.SetInt("horizontal", horizontal); 
+			// 3. Bind the texture to read from (either the bright parts or the result of the previous blur pass)
+			// Notice: when the first iteration, we read texture from colorBuffers[1]
+			glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
+			glBindVertexArray(quadVAO);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			glBindVertexArray(0);
+			horizontal = !horizontal;
+			if (first_iteration)
+				first_iteration = false;
+		}
 		
-		// 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
-		// --------------------------------------------------------------------------------------------------------------------------
-		// TODO
+		// 3. Render floating point color buffer to 2D quad & tonemap HDR colors to default framebuffer
+		// --------------------------------------------------------------------------------------------
+        // In this step, we render the HDR color buffer onto a 2D quad.
+        // We also apply tone mapping to convert HDR colors to the default framebuffer's color range.
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); // Switch to default framebuffer
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		shaderBloomFinal.Bind();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+		shaderBloomFinal.SetInt("bloom", bloom);
+		shaderBloomFinal.SetFloat("exposure", exposure);
+
+		glBindVertexArray(quadVAO);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
 		
 		// Print the current state of the bloom effect and the exposure value to the console
 		std::cout << "bloom: " << (bloom ? "on " : "off ") << "| exposure: " << exposure << "\n";

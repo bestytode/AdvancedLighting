@@ -171,6 +171,11 @@
     <None Include="res\shaders\blinn_phong.vs" />
     <None Include="res\shaders\bloom.fs" />
     <None Include="res\shaders\bloom.vs" />
+    <None Include="res\shaders\bloom_final.fs" />
+    <None Include="res\shaders\bloom_final.vs" />
+    <None Include="res\shaders\bloom_light_box.fs" />
+    <None Include="res\shaders\blur.fs" />
+    <None Include="res\shaders\blur.vs" />
     <None Include="res\shaders\debug_quad.fs" />
     <None Include="res\shaders\debug_quad.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
