@@ -8,6 +8,15 @@
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
+// The Shader class encapsulates OpenGL shader programs.
+// It provides functionalities for creating, compiling, and linking shaders,
+// as well as setting uniform variables.
+// 
+// Usage Example:
+// Shader myShader("vertexShaderPath", "fragmentShaderPath");
+// myShader.Bind();
+// myShader.SetVec3("someUniform", glm::vec3(1.0f, 0.0f, 0.0f));
+// myShader.Unbind();
 class Shader
 {
 public:
