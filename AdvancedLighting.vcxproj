@@ -72,19 +72,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
+    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib\Release\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
+    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib\Release\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
+    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib\Release\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\include;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
+    <LibraryPath>E:\CG\AdvancedLighting\AdvancedLighting\dependencies\Assimp\lib\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLEW\lib\Release\x64;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\GLFW\lib-vc2022;E:\CG\AdvancedLighting\AdvancedLighting\dependencies\glm-master;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -93,7 +93,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>E:\CG\AdvancedLighting\AdvancedLighting\none;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -110,7 +110,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>E:\CG\AdvancedLighting\AdvancedLighting\none;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,7 +127,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>E:\CG\AdvancedLighting\AdvancedLighting\none;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,7 +144,7 @@
       <PreprocessorDefinitions>GLEW_STATIC;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>E:\CG\AdvancedLighting\AdvancedLighting\none;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -157,9 +157,6 @@
   <ItemGroup>
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\geometry_renderers.h" />
-    <ClInclude Include="src\imgui\imgui_impl_glfw.h" />
-    <ClInclude Include="src\imgui\imgui_impl_opengl3.h" />
-    <ClInclude Include="src\imgui\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="src\mesh.h" />
     <ClInclude Include="src\model.h" />
     <ClInclude Include="src\shader.h" />
@@ -210,8 +207,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\bloom.cpp" />
-    <ClCompile Include="src\imgui\imgui_impl_glfw.cpp" />
-    <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
