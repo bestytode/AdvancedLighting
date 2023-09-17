@@ -17,7 +17,7 @@ void main()
     vec3 normal = normalize(Normal);
 
     // ambient
-    vec3 ambient = 0.0 * color;
+    vec3 ambient = 0.1 * color;
     // lighting
     vec3 lighting = vec3(0.0);
     vec3 viewDir = normalize(viewPos - FragPos);
@@ -37,7 +37,7 @@ void main()
 
     // check whether result is higher than some threshold, if so, output as bloom threshold color
     float brightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
-    if(brightness > 1.0)
+    if(brightness > 5.0)
         BrightColor = vec4(result, 1.0);
     else
         BrightColor = vec4(0.0, 0.0, 0.0, 1.0);

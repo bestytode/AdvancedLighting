@@ -87,9 +87,16 @@ int main()
 	glBindVertexArray(0);
 
 	// Build & compile shader(s)
-	Shader shader("res/shaders/bloom.vs", "res/shaders/bloom.fs"); // generate both frag and bright color
-	Shader shaderLight("res/shaders/bloom.vs", "res/shaders/bloom_light_box.fs"); // for light source, same generating both frag and bright color
+	// shader: Renders the scene and extracts bright areas for bloom.
+	Shader shader("res/shaders/bloom.vs", "res/shaders/bloom.fs");
+
+	// shaderLight: Renders light sources and their bright areas.
+	Shader shaderLight("res/shaders/bloom.vs", "res/shaders/bloom_light_box.fs");
+
+	// shaderBlur: Applies 2-pass Gaussian blur to bright areas.
 	Shader shaderBlur("res/shaders/blur.vs", "res/shaders/blur.fs");
+
+	// shaderBloomFinal: Combines HDR scene and blurred bloom for final output.
 	Shader shaderBloomFinal("res/shaders/bloom_final.vs", "res/shaders/bloom_final.fs");
 
 	// Load texture(s)
@@ -169,7 +176,7 @@ int main()
 	lightColors.push_back(glm::vec3(0.0f, 0.0f, 15.0f));
 	lightColors.push_back(glm::vec3(0.0f, 5.0f, 0.0f));
 
-	// Shader configs
+	// Shader configs(textures)
 	shader.Bind();
 	shader.SetInt("diffuseTexture", 0);
 	shaderBlur.Bind();
