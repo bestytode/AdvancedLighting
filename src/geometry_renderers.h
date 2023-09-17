@@ -13,6 +13,9 @@
 #include <GLFW/glfw3.h>
 
 namespace yzh {
+	// Function declarations:
+	// ----------------------
+
     // This function renders a cube using OpenGL with dimensions of 2 * 2 * 2 units
 	// The cube's vertex attributes include position, normal, and texture coordinates.
     // Note: This function does not use an Index Buffer Object (IBO).
@@ -21,14 +24,16 @@ namespace yzh {
     // This function renders a sphere in OpenGL with a radius of 2.0 units.
     // Vertex attributes include position, normal, and texture coordinates.
     // The sphere is detailed with 64 segments along both the X and Y axes, resulting in a highly detailed mesh.
-    // Note: This function uses Element Buffer Object (EBO).
-	void RenderSphere();
+	// he function allows for customization of the sphere's detail level through x_segments and y_segments.
+	void RenderSphere(const unsigned int x_segments = 64, const unsigned int y_segments = 64);
 
     // This function renders a 2D quad in OpenGL with dimensions of 2 * 2 units.
     // Vertex attributes include position, normal, and texture coordinates.
     // The quad is rendered using GL_TRIANGLE_STRIP for optimized rendering.
 	void RenderQuad();
 
+	// Function implementations:
+	// -------------------------
 	void RenderCube()
 	{
 		static unsigned int cubeVAO = 0;
@@ -104,7 +109,7 @@ namespace yzh {
 		glBindVertexArray(0);
 	}
 
-	void RenderSphere()
+	void RenderSphere(const unsigned int x_segments, const unsigned int y_segments)
 	{
 		static unsigned int sphereVAO = 0;
 		static unsigned int sphereVBO, sphereEBO;
@@ -112,15 +117,14 @@ namespace yzh {
 		// Preventing redefinition
 		if (sphereVAO == 0) {
 			glGenVertexArrays(1, &sphereVAO);
-
 			glGenBuffers(1, &sphereVBO);
 			glGenBuffers(1, &sphereEBO);
 
 			std::vector<float> vertices;
 			std::vector<unsigned int> indices;
 
-			const unsigned int X_SEGMENTS = 64;
-			const unsigned int Y_SEGMENTS = 64;
+			const unsigned int X_SEGMENTS = x_segments;
+			const unsigned int Y_SEGMENTS = y_segments;
 			const float PI = 3.14159265359;
 			float radius = 2.0f;
 			for (unsigned int y = 0; y <= Y_SEGMENTS; ++y) {

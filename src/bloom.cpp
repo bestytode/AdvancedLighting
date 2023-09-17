@@ -5,9 +5,9 @@
 #include <GLFW/glfw3.h>
 
 #include "camera.h"
-#include "model.h"
 #include "shader.h"
 #include "geometry_renderers.h"
+#include "model.h"
 
 // Function declarations
 void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
@@ -322,6 +322,8 @@ int main()
 		glfwPollEvents();
 	}
 
+	// Optional: release all the resources of OpenGL (VAO, VBO, etc.)
+
 	glfwTerminate();
 }
 
@@ -406,27 +408,27 @@ unsigned int LoadTexture(const std::string& path)
 	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
 	if (data) {
 		GLenum format = GL_RGBA;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
+		if (nrComponents == 1) format = GL_RED;
+		else if (nrComponents == 3) format = GL_RGB;
+		else if (nrComponents == 4) format = GL_RGBA;
+		else {
+			std::cerr << "Invalid texture format: Unsupported number of components!\n";
+			return -1;
+		}
 
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
 		stbi_image_free(data);
 	}
 	else {
-		std::cout << "Texture failed to load at path: " << path << std::endl;
+		std::cerr << "Texture failed to load at path: " << path << std::endl;
 		stbi_image_free(data);
+		return -1;
 	}
 
 	return textureID;
