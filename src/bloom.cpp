@@ -96,9 +96,45 @@ int main()
 	unsigned int woodTexture = LoadTexture("res/textures/wood.png");
 	unsigned int containerTexture = LoadTexture("res/textures/container2.png");
 
-	// configure floating point framebuffers
-    // ---------------------------------------
-	// TODO
+	// Configure floating point framebuffers
+	unsigned int hdrFBO;
+	glGenFramebuffers(1, &hdrFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+
+	// Create 2 floating point color buffers (1 for normal rendering, other for brightness threshold values)
+	unsigned int colorBuffers[2];
+	glGenTextures(2, colorBuffers);
+	for (size_t i = 0; i < 2; i++) {
+		glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		// Attach color buffer to hdrFBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+	}
+
+	// Create & attach rbo for depth
+	unsigned int rboDepth;
+	glGenRenderbuffers(1, &rboDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+	// Explicitly tell OpenGL render to 2 color buffers
+	// Notice: the location in fragment shader corresponds to the index in this array
+	GLenum drawBuffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(2, drawBuffers);
+
+	// finally check if framebuffer is complete
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Framebuffer not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// ping-pong-framebuffer for blurring
+	// todo
 
 	// Light positions
 	std::vector<glm::vec3> lightPositions;
@@ -145,9 +181,88 @@ int main()
 		ProcessInput(window);
 
 		// 1. render scene into floating point framebuffer
-        // -----------------------------------------------
-		// TODO
-		
+		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 model = glm::mat4(1.0f);
+
+		shader.Bind();
+		shader.SetMat4("projection", projection);
+		shader.SetMat4("view", view);
+		shader.SetVec3("viewPos", camera.position);
+
+		// Light uniforms
+		if (lightPositions.size() == lightColors.size()) {
+			for (int i = 0; i < lightPositions.size(); ++i) {
+				std::string posName = "lightPositions[" + std::to_string(i) + "]";
+				std::string colName = "lightColors[" + std::to_string(i) + "]";
+				shader.SetVec3(posName, lightPositions[i]);
+				shader.SetVec3(colName, lightColors[i]);
+			}
+		}
+
+		// create one large cube that acts as the floor
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, woodTexture);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
+		model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		// then create multiple cubes as the scenery
+		glBindTexture(GL_TEXTURE_2D, containerTexture);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
+		model = glm::scale(model, glm::vec3(0.5f));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0));
+		model = glm::scale(model, glm::vec3(0.5f));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0));
+		model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0));
+		model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+		model = glm::scale(model, glm::vec3(1.25));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0));
+		model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0));
+		model = glm::scale(model, glm::vec3(0.5f));
+		shader.SetMat4("model", model);
+		RenderCube();
+
+		// finally show all the light sources as bright cubes
+		shaderLight.Bind();
+		shaderLight.SetMat4("projection", projection);
+		shaderLight.SetMat4("view", view);
+
+		for (size_t i = 0; i < lightPositions.size(); i++) {
+			model = glm::mat4(1.0f);
+			model = glm::translate(model, glm::vec3(lightPositions[i]));
+			model = glm::scale(model, glm::vec3(0.25f));
+			shaderLight.SetMat4("model", model);
+			shaderLight.SetVec3("lightColor", lightColors[i]);
+			RenderCube();
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	    // 2. blur bright fragments with two-pass Gaussian Blur 
 		// --------------------------------------------------
 		// TODO
