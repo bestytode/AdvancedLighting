@@ -13,7 +13,7 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-// Function declarations
+// Function declarations (callback functions)
 void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -21,21 +21,20 @@ void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path);
 
 // Scene settings
-constexpr int SCR_WIDTH = 800;
-constexpr int SCR_HEIGHT = 800;
+constexpr int SCR_WIDTH = 1920;
+constexpr int SCR_HEIGHT = 1080;
 
-// Camera settings
+// Camera configs
 Camera camera(0.0f, 0.0f, 5.0f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
-bool firstMouse = true;
+bool mouseButtonPressed = true;
 
 // Timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// Bloom settings
-// control them in ProcessInput()
+// Bloom configs (control them in ProcessInput())
 bool bloom = true;
 bool bloomKeyPressed = false;
 float exposure = 1.0f;
@@ -55,7 +54,6 @@ int main()
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 		glfwSetCursorPosCallback(window, mouse_callback);
 		glfwSetScrollCallback(window, scroll_callback);
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		if (glewInit() != GLEW_OK)
 			throw std::runtime_error("failed to init glew");
@@ -176,19 +174,14 @@ int main()
 	shaderBloomFinal.SetInt("scene", 0);
 	shaderBloomFinal.SetInt("bloomBlur", 1);
 
-	int counter = 0;
-	const int maxPrints = 50;
+	// Imgui settings
+	bool firstTime = true;
+
 	while (!glfwWindowShouldClose(window)) {
 		// Per-frame logic
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-
-		// fps printing
-		if (counter < maxPrints) {
-			std::cout << "fps: " << 1.0f / deltaTime << "\n";
-			counter++;
-		}
 
 		// Render
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -325,18 +318,24 @@ int main()
 		shaderBloomFinal.SetInt("bloom", bloom);
 		shaderBloomFinal.SetFloat("exposure", exposure);
 		yzh::RenderQuad();
-		
-		// Print the current state of the bloom effect and the exposure value to the console
-		std::cout << "bloom: " << (bloom ? "on " : "off ") << "| exposure: " << exposure << "\n";
 
+		// ImGui code here
+		// ---------------
 		// ImGui Frame Start
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
 		// ImGui GUI code
-		ImGui::Begin("Demo window");
-		ImGui::Text("Hello, world!");
+		if (firstTime) {
+			ImGui::SetNextWindowSize(ImVec2(500, 400));
+			ImGui::SetNextWindowPos(ImVec2(50, 50));
+			firstTime = false;
+		}
+		ImGui::Begin("hnzz");
+		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+		ImGui::Checkbox("Enable Bloom", &bloom);
+		ImGui::SliderFloat("Exposure", &exposure, 0.1f, 5.0f);
 		ImGui::End();
 
 		// ImGui Rendering
@@ -369,22 +368,27 @@ void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT
 // glfw: whenever the mouse moves, this callback is called
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
-	float xpos = static_cast<float>(xposIn);
-	float ypos = static_cast<float>(yposIn);
+	// Check if the left mouse button is pressed
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		float xpos = static_cast<float>(xposIn);
+		float ypos = static_cast<float>(yposIn);
 
-	if (firstMouse) {
+		if (mouseButtonPressed) {
+			lastX = xpos;
+			lastY = ypos;
+			mouseButtonPressed = false;
+		}
+
+		float xoffset = xpos - lastX;
+		float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
 		lastX = xpos;
 		lastY = ypos;
-		firstMouse = false;
+
+		camera.ProcessMouseMovement(xoffset, yoffset);
 	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-	lastX = xpos;
-	lastY = ypos;
-
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	else
+		mouseButtonPressed = true;
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
