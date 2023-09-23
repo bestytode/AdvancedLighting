@@ -217,6 +217,10 @@ int main()
 			}
 		}
 
+		yzh::Cube cube;   // Initialize 3D cube for rendering.
+		yzh::Sphere sphere; // Initialize 3D sphere for rendering.
+		yzh::Quad quad;   // Initialize 2D quad for rendering.
+
 		// create one large cube that acts as the floor
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, woodTexture);
@@ -224,7 +228,7 @@ int main()
 		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
 		model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		// then create multiple cubes as the scenery
 		glBindTexture(GL_TEXTURE_2D, containerTexture);
@@ -232,38 +236,38 @@ int main()
 		model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
 		model = glm::scale(model, glm::vec3(0.5f));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0));
 		model = glm::scale(model, glm::vec3(0.5f));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0));
 		model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0));
 		model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
 		model = glm::scale(model, glm::vec3(1.25));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0));
 		model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0));
 		model = glm::scale(model, glm::vec3(0.5f));
 		shader.SetMat4("model", model);
-		yzh::RenderCube();
+		cube.Render();
 
 		// finally show all the light sources as bright cubes
 		// this is where actually the bloom affect happens
@@ -277,7 +281,7 @@ int main()
 			model = glm::scale(model, glm::vec3(0.05f));
 			shaderLight.SetMat4("model", model);
 			shaderLight.SetVec3("lightColor", lightColors[i]);
-			yzh::RenderSphere();
+			sphere.Render();
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -297,7 +301,7 @@ int main()
 			// 3. Bind the texture to read from (either the bright parts or the result of the previous blur pass)
 			// Notice: when the first iteration, we read texture from colorBuffers[1]
 			glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
-			yzh::RenderQuad();
+			quad.Render();
 			horizontal = !horizontal;
 			if (first_iteration)
 				first_iteration = false;
@@ -317,7 +321,7 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
 		shaderBloomFinal.SetInt("bloom", bloom);
 		shaderBloomFinal.SetFloat("exposure", exposure);
-		yzh::RenderQuad();
+		quad.Render();
 
 		// ImGui code here
 		// ---------------
