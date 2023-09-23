@@ -302,9 +302,9 @@ int main()
 			// Notice: when the first iteration, we read texture from colorBuffers[1]
 			glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
 			quad.Render();
+
 			horizontal = !horizontal;
-			if (first_iteration)
-				first_iteration = false;
+			first_iteration = false;
 		}
 		
 		// 3. Render floating point color buffer to 2D quad & tonemap HDR colors to default framebuffer
