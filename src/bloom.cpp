@@ -72,6 +72,8 @@ int main()
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	ImGui::StyleColorsDark();
+	// Load custom fonts
+	// TODO
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330 core");
 
@@ -332,6 +334,8 @@ int main()
 
 		// ImGui GUI code
 		if (firstTime) {
+			// Use SetNextXXX functions before ImGui::Begin() to set window properties for the upcoming frame, 
+			// ensuring that the changes take effect immediately and are not overridden by ImGui's internal logic.
 			ImGui::SetNextWindowSize(ImVec2(500, 400));
 			ImGui::SetNextWindowPos(ImVec2(50, 50));
 			firstTime = false;
