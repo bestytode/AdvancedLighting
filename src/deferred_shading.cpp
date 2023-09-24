@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <random>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -78,36 +79,36 @@ int main()
 	// Load model(s)
 	Model backpack(".../backpack.obj");
 	std::vector<glm::vec3> objectPositions;
-	objectPositions.push_back(glm::vec3(-3.0, -0.5, -3.0));
-	objectPositions.push_back(glm::vec3(0.0, -0.5, -3.0));
-	objectPositions.push_back(glm::vec3(3.0, -0.5, -3.0));
-	objectPositions.push_back(glm::vec3(-3.0, -0.5, 0.0));
-	objectPositions.push_back(glm::vec3(0.0, -0.5, 0.0));
-	objectPositions.push_back(glm::vec3(3.0, -0.5, 0.0));
-	objectPositions.push_back(glm::vec3(-3.0, -0.5, 3.0));
-	objectPositions.push_back(glm::vec3(0.0, -0.5, 3.0));
-	objectPositions.push_back(glm::vec3(3.0, -0.5, 3.0));
+	objectPositions.reserve(9);  // Reserve space for 9 elements
+
+	for (float x = -3.0f; x <= 3.0f; x += 3.0f) {
+		for (float z = -3.0f; z <= 3.0f; z += 3.0f) 
+			objectPositions.emplace_back(glm::vec3(x, -0.5f, z));
+	}
 
 	// configure g-buffer framebuffer
 	// ------------------------------
 	// TODO
 	
+
 	// Lighting info
-	const unsigned int NR_LIGHTS = 32;
-	std::vector<glm::vec3> lightPositions;
-	std::vector<glm::vec3> lightColors;
-	srand(13);
-	for (size_t i = 0; i < NR_LIGHTS; i++) {
-		// calculate slightly random offsets
-		float xPos = static_cast<float>(((rand() % 100) / 100.0) * 6.0 - 3.0);
-		float yPos = static_cast<float>(((rand() % 100) / 100.0) * 6.0 - 4.0);
-		float zPos = static_cast<float>(((rand() % 100) / 100.0) * 6.0 - 3.0);
-		lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
-		// also calculate random color
-		float rColor = static_cast<float>(((rand() % 100) / 200.0f) + 0.5); // between 0.5 and 1.0
-		float gColor = static_cast<float>(((rand() % 100) / 200.0f) + 0.5); // between 0.5 and 1.0
-		float bColor = static_cast<float>(((rand() % 100) / 200.0f) + 0.5); // between 0.5 and 1.0
-		lightColors.push_back(glm::vec3(rColor, gColor, bColor));
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(-1, 1);
+
+	const unsigned int nrLights = 32;
+	std::vector<glm::vec3>lightPositions;
+	std::vector<glm::vec3>lightColors;
+	for (size_t i = 0; i < nrLights; i++) {
+		float x = 3.0f * dis(gen);
+		float y = 3.0f * dis(gen) - 1.0f;
+		float z = 3.0f * dis(gen);
+		lightPositions.emplace_back(glm::vec3(x, y, z));
+
+		float r = 0.5f * dis(gen) + 0.5f;
+		float g = 0.5f * dis(gen) + 0.5f;
+		float b = 0.5f * dis(gen) + 0.5f;
+		lightColors.emplace_back(glm::vec3(r, g, b));
 	}
 
 	// shader configs
