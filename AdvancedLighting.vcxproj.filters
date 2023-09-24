@@ -119,9 +119,6 @@
     <None Include="res\shaders\bloom_final.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\bloom.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\imgui\imgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,6 +138,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\deferred_shading.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

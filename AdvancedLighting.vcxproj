@@ -215,7 +215,7 @@
     <None Include="res\shaders\shadow_map_depth.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\bloom.cpp" />
+    <ClCompile Include="src\deferred_shading.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
