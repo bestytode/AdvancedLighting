@@ -117,6 +117,8 @@
     <None Include="res\shaders\bloom_light_box.fs" />
     <None Include="res\shaders\bloom_final.vs" />
     <None Include="res\shaders\bloom_final.fs" />
+    <None Include="res\shaders\g_buffer.vs" />
+    <None Include="res\shaders\g_buffer.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\imgui\imgui.cpp">

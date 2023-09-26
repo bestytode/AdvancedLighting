@@ -194,6 +194,8 @@
     <None Include="res\shaders\debug_quad.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
     <None Include="res\shaders\gamma_correction.vs" />
+    <None Include="res\shaders\g_buffer.fs" />
+    <None Include="res\shaders\g_buffer.vs" />
     <None Include="res\shaders\hdr.fs" />
     <None Include="res\shaders\hdr.vs" />
     <None Include="res\shaders\hdrLighting.fs" />
