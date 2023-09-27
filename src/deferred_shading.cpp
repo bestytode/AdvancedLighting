@@ -66,7 +66,8 @@ int main()
 	// ImGui Initialization
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO(); 
+	io.FontGlobalScale = 2.0f;
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330 core");
@@ -288,7 +289,7 @@ int main()
 		// Retrieve and display the cursor position and the RGBA color of the pixel under the cursor
 		glfwGetCursorPos(window, &cursor_x, &cursor_y);
 		glReadPixels(cursor_x, SCR_HEIGHT - cursor_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
-		ImGui::Text("Cursor is at (%f, %f)", cursor_x, cursor_y);
+		ImGui::Text("Cursor position: (%f, %f)", cursor_x, cursor_y);
 		ImGui::Text("RGBA: (%d, %d, %d, %d)", pixel[0], pixel[1], pixel[2], pixel[3]);
 
 		ImGui::End();
