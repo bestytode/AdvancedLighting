@@ -34,7 +34,7 @@ void main()
 		vec3 lightDir = normalize(lights[i].Position - FragPos);
 
 		// Diffuse
-		vec3 diffuse = lights[i].Color * Diffuse * max(dot(Normal, lightDir), 0.0f);
+		vec3 diffuse = lights[i].Color * Diffuse * max(dot(Normal, lightDir), 0.0f) * 1.5f;
         // Specular
 		vec3 halfwayDir = normalize(lightDir + viewDir);
 		float spec = pow(max(dot(halfwayDir, Normal), 0.0f), 32.0f);

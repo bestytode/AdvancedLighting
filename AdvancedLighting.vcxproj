@@ -177,6 +177,37 @@
     <Image Include="res\models\backpack\normal.png" />
     <Image Include="res\models\backpack\roughness.jpg" />
     <Image Include="res\models\backpack\specular.jpg" />
+    <Image Include="res\models\nanosuit\arm_dif.png" />
+    <Image Include="res\models\nanosuit\arm_showroom_ddn.png" />
+    <Image Include="res\models\nanosuit\arm_showroom_refl.png" />
+    <Image Include="res\models\nanosuit\arm_showroom_spec.png" />
+    <Image Include="res\models\nanosuit\back.jpg" />
+    <Image Include="res\models\nanosuit\body_dif.png" />
+    <Image Include="res\models\nanosuit\body_showroom_ddn.png" />
+    <Image Include="res\models\nanosuit\body_showroom_refl.png" />
+    <Image Include="res\models\nanosuit\body_showroom_spec.png" />
+    <Image Include="res\models\nanosuit\cell_arm_alpha.png" />
+    <Image Include="res\models\nanosuit\cell_body_alpha.png" />
+    <Image Include="res\models\nanosuit\cell_ddn.png" />
+    <Image Include="res\models\nanosuit\cell_hand_alpha.png" />
+    <Image Include="res\models\nanosuit\cell_helmet_alpha.png" />
+    <Image Include="res\models\nanosuit\cell_leg_alpha.png" />
+    <Image Include="res\models\nanosuit\front.jpg" />
+    <Image Include="res\models\nanosuit\glass_ddn.png" />
+    <Image Include="res\models\nanosuit\glass_dif.png" />
+    <Image Include="res\models\nanosuit\glass_refl.png" />
+    <Image Include="res\models\nanosuit\hand_dif.png" />
+    <Image Include="res\models\nanosuit\hand_showroom_ddn.png" />
+    <Image Include="res\models\nanosuit\hand_showroom_refl.png" />
+    <Image Include="res\models\nanosuit\hand_showroom_spec.png" />
+    <Image Include="res\models\nanosuit\helmet_diff.png" />
+    <Image Include="res\models\nanosuit\helmet_showroom_ddn.png" />
+    <Image Include="res\models\nanosuit\helmet_showroom_refl.png" />
+    <Image Include="res\models\nanosuit\helmet_showroom_spec.png" />
+    <Image Include="res\models\nanosuit\leg_dif.png" />
+    <Image Include="res\models\nanosuit\leg_showroom_ddn.png" />
+    <Image Include="res\models\nanosuit\leg_showroom_refl.png" />
+    <Image Include="res\models\nanosuit\leg_showroom_spec.png" />
     <Image Include="res\textures\bricks2.jpg" />
     <Image Include="res\textures\bricks2_disp.jpg" />
     <Image Include="res\textures\bricks2_normal.jpg" />
@@ -187,6 +218,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\backpack\backpack.mtl" />
+    <None Include="res\models\nanosuit\nanosuit.mtl" />
     <None Include="res\shaders\blinn_phong.fs" />
     <None Include="res\shaders\blinn_phong.vs" />
     <None Include="res\shaders\bloom.fs" />

@@ -79,6 +79,8 @@ int main()
 
 	// Load model(s)
 	Model backpack("res/models/backpack/backpack.obj");
+	Model nanosuit("res/models/nanosuit/nanosuit.obj");
+
 	std::vector<glm::vec3> objectPositions;
 	objectPositions.reserve(9);  // Reserve space for 9 elements
 
@@ -196,8 +198,8 @@ int main()
 			model = glm::translate(model, objectPositions[i]);
 			model = glm::scale(model, glm::vec3(0.5f));
 			shaderGeometryPass.SetMat4("model", model);
-			for (size_t j = 0; j < backpack.meshes.size(); j++) {
-				for (const auto& texture : backpack.textures_loaded) {
+			for (size_t j = 0; j < nanosuit.meshes.size(); j++) {
+				for (const auto& texture : nanosuit.textures_loaded) {
 					if (texture.type == "texture_diffuse") {
 						glActiveTexture(GL_TEXTURE0);
 						glBindTexture(GL_TEXTURE_2D, texture.id);
@@ -214,8 +216,8 @@ int main()
 					else if (texture.type == "texture_height") {
 						// nothing here since we do not use normal map in this case
 					}
-					glBindVertexArray(backpack.meshes[j].GetVAO());
-					glDrawElements(GL_TRIANGLES, backpack.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
+					glBindVertexArray(nanosuit.meshes[j].GetVAO());
+					glDrawElements(GL_TRIANGLES, nanosuit.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
 					glBindVertexArray(0);
 				}
 			}
