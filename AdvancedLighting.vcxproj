@@ -172,6 +172,11 @@
     <ClInclude Include="src\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\models\backpack\ao.jpg" />
+    <Image Include="res\models\backpack\diffuse.jpg" />
+    <Image Include="res\models\backpack\normal.png" />
+    <Image Include="res\models\backpack\roughness.jpg" />
+    <Image Include="res\models\backpack\specular.jpg" />
     <Image Include="res\textures\bricks2.jpg" />
     <Image Include="res\textures\bricks2_disp.jpg" />
     <Image Include="res\textures\bricks2_normal.jpg" />
@@ -181,6 +186,7 @@
     <Image Include="res\textures\wood.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\models\backpack\backpack.mtl" />
     <None Include="res\shaders\blinn_phong.fs" />
     <None Include="res\shaders\blinn_phong.vs" />
     <None Include="res\shaders\bloom.fs" />
@@ -192,6 +198,10 @@
     <None Include="res\shaders\blur.vs" />
     <None Include="res\shaders\debug_quad.fs" />
     <None Include="res\shaders\debug_quad.vs" />
+    <None Include="res\shaders\deferred_light_box.fs" />
+    <None Include="res\shaders\deferred_light_box.vs" />
+    <None Include="res\shaders\deferred_shading.fs" />
+    <None Include="res\shaders\deferred_shading.vs" />
     <None Include="res\shaders\gamma_correction.fs" />
     <None Include="res\shaders\gamma_correction.vs" />
     <None Include="res\shaders\g_buffer.fs" />
@@ -225,6 +235,9 @@
     <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_widgets.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\models\backpack\source_attribution.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

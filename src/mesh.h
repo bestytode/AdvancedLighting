@@ -73,14 +73,7 @@ Mesh::Mesh(const std::vector<Vertex>& _vertices,
 	this->indices = _indices;
 	this->textures = _textures;
 	this->hasTangentAndBitangent = _hasTangentAndBitangent;
-#ifdef _DEBUG
-	if (hasTangentAndBitangent) {
-		std::cout << "Mesh has tangents and bitangents.\n";
-	}
-	else {
-		std::cout << "Mesh does not have tangents and bitangents.\n";
-	}
-#endif
+
 	SetupMesh();
 }
 

@@ -72,12 +72,12 @@ int main()
 	ImGui_ImplOpenGL3_Init("#version 330 core");
 
 	// Build & compile shader(s)
-	Shader shaderGeometryPass("8.1.g_buffer.vs", "8.1.g_buffer.fs");
-	Shader shaderLightingPass("8.1.deferred_shading.vs", "8.1.deferred_shading.fs");
-	Shader shaderLightBox("8.1.deferred_light_box.vs", "8.1.deferred_light_box.fs");
+	Shader shaderGeometryPass("res/shaders/g_buffer.vs", "res/shaders/g_buffer.fs");
+	Shader shaderLightingPass("res/shaders/deferred_shading.vs", "res/shaders/deferred_shading.fs");
+	Shader shaderLightBox("res/shaders/deferred_light_box.vs", "res/shaders/deferred_light_box.fs");
 
 	// Load model(s)
-	Model backpack(".../backpack.obj");
+	Model backpack("res/models/backpack/backpack.obj");
 	std::vector<glm::vec3> objectPositions;
 	objectPositions.reserve(9);  // Reserve space for 9 elements
 
@@ -154,6 +154,7 @@ int main()
 	// Set VAO for geometry shape for later use
 	yzh::Quad quad;
 	yzh::Cube cube;
+	yzh::Sphere sphere;
 
 	// shader configs
 	shaderLightingPass.Bind();
@@ -162,7 +163,7 @@ int main()
 	shaderLightingPass.SetInt("gAlbedoSpec", 2);
 
 	// Imgui settings
-	bool firstTime = false;
+	bool firstTime = true;
 	while (!glfwWindowShouldClose(window)) {
 		// Per-frame logic
 		float currentFrame = glfwGetTime();
@@ -178,6 +179,7 @@ int main()
 
 		// 1. geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shaderGeometryPass.Bind();
 
 		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -185,17 +187,26 @@ int main()
 		glm::mat4 model = glm::mat4(1.0f);
 		shaderGeometryPass.SetMat4("projection", projection);
 		shaderGeometryPass.SetMat4("view", view);
-		for (size_t i = 0; i < lightPositions.size(); i++) {
+		for (size_t i = 0; i < objectPositions.size(); i++) {
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, objectPositions[i]);
 			model = glm::scale(model, glm::vec3(0.5f));
 			shaderGeometryPass.SetMat4("model", model);
-			backpack.Draw(shaderGeometryPass);
+			//backpack.Draw(shaderGeometryPass);
+			for (size_t j = 0; j < backpack.meshes.size(); j++) {
+				glActiveTexture(GL_TEXTURE0);
+				shaderGeometryPass.SetInt("texture_diffuse1", backpack.textures_loaded[0].id);
+				glActiveTexture(GL_TEXTURE1);
+				shaderGeometryPass.SetInt("texture_specular1", backpack.textures_loaded[1].id);
+
+				glBindVertexArray(backpack.meshes[j].GetVAO());
+				glDrawElements(GL_TRIANGLES, backpack.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
+				glBindVertexArray(0);
+			}
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. lighting pass: calculate lighting by iterating over a screen filled quad pixel-by-pixel using the gbuffer's content.
-		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shaderLightingPass.Bind();
 		glActiveTexture(GL_TEXTURE0);
@@ -229,7 +240,17 @@ int main()
 		shaderLightBox.Bind();
 		shaderLightBox.SetMat4("projection", projection);
 		shaderLightBox.SetMat4("view", view);
-		
+
+		if (lightPositions.size() == lightColors.size()) {
+			for (size_t i = 0; i < lightPositions.size(); i++) {
+				model = glm::mat4(1.0f);
+				model = glm::translate(model, lightPositions[i]);
+				model = glm::scale(model, glm::vec3(0.125f));
+				shaderLightBox.SetMat4("model", model);
+				shaderLightBox.SetVec3("lightColor", lightColors[i]);
+				sphere.Render();
+			}
+		}
 
 		// ImGui code here
 		// ---------------

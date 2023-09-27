@@ -23,7 +23,7 @@ namespace yzh {
 	{
 	public:
 		GeometryShape() {  }
-		virtual ~GeometryShape() = 0;
+		virtual ~GeometryShape() {}
 		virtual void Render() = 0;
 
 		virtual float SurfaceArea() const { return 0.0f; }

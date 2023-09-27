@@ -41,11 +41,13 @@ private:
 
 	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type,
 		std::string typeName);
-
-private:
+public:
 	std::vector<Mesh>meshes;
 	std::vector<Texture>textures_loaded;
+private:
 	std::string directory;
+
+	bool firstTime = true; // the first time to load mesh
 };
 
 // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
@@ -53,7 +55,7 @@ void Model::LoadModel(const std::string& _filePath)
 {
 	Assimp::Importer import;
 	const aiScene* scene = import.ReadFile(_filePath, 
-		aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+		aiProcess_Triangulate | aiProcess_FlipUVs );
 
 #ifdef _DEBUG
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
@@ -92,6 +94,7 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<Vertex>vertices;
 	std::vector<unsigned int>indices;
 	std::vector<Texture>textures;
+	bool hasTangentsAndBitangents = mesh->HasTangentsAndBitangents();
 
 	// Process vertices
 	for (size_t i = 0; i < mesh->mNumVertices; i++) {
@@ -111,7 +114,7 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 			vertex.texCoords = glm::vec2(0.0f, 0.0f);
 
 		// Tangents and Bitangents
-		if (mesh->HasTangentsAndBitangents()) {
+		if (hasTangentsAndBitangents) {
 			vertex.Tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
 			vertex.Bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
 		}
@@ -145,10 +148,11 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 	}
 
-	if (mesh->HasTangentsAndBitangents())
-		return Mesh(vertices, indices, textures, true);
-	else
-		return Mesh(vertices, indices, textures, false);
+	if (this->firstTime) {
+		std::cout << "Mesh " << (hasTangentsAndBitangents ? "has" : "does not have") << " tangents and bitangents.\n";
+		this->firstTime = false;
+	}
+	return Mesh(vertices, indices, textures, hasTangentsAndBitangents);
 }
 
 // Return a vector contains Texture, retriving texture information from aiMaterial to our own textures and textures_loaded
