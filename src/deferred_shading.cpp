@@ -164,6 +164,8 @@ int main()
 
 	// Imgui settings
 	bool firstTime = true;
+	double cursor_x, cursor_y;
+	unsigned char pixel[4];
 	while (!glfwWindowShouldClose(window)) {
 		// Per-frame logic
 		float currentFrame = glfwGetTime();
@@ -206,7 +208,10 @@ int main()
 						shaderGeometryPass.SetInt("texture_specular1", 1);
 					}
 					else if (texture.type == "texture_normal") {
-						// 
+						// nothing here since we do not use normal map in this case
+					}
+					else if (texture.type == "texture_height") {
+						// nothing here since we do not use normal map in this case
 					}
 					glBindVertexArray(backpack.meshes[j].GetVAO());
 					glDrawElements(GL_TRIANGLES, backpack.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
@@ -255,7 +260,7 @@ int main()
 			for (size_t i = 0; i < lightPositions.size(); i++) {
 				model = glm::mat4(1.0f);
 				model = glm::translate(model, lightPositions[i]);
-				model = glm::scale(model, glm::vec3(0.125f));
+				model = glm::scale(model, glm::vec3(0.05f));
 				shaderLightBox.SetMat4("model", model);
 				shaderLightBox.SetVec3("lightColor", lightColors[i]);
 				sphere.Render();
@@ -277,6 +282,15 @@ int main()
 		}
 		ImGui::Begin("hnzz");
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+		ImGui::Text("Number of Objects: %u", (unsigned int)objectPositions.size());
+		ImGui::Text("Number of Lights: %u", (unsigned int)lightPositions.size());
+		
+		// Retrieve and display the cursor position and the RGBA color of the pixel under the cursor
+		glfwGetCursorPos(window, &cursor_x, &cursor_y);
+		glReadPixels(cursor_x, SCR_HEIGHT - cursor_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+		ImGui::Text("Cursor is at (%f, %f)", cursor_x, cursor_y);
+		ImGui::Text("RGBA: (%d, %d, %d, %d)", pixel[0], pixel[1], pixel[2], pixel[3]);
+
 		ImGui::End();
 
 		// ImGui Rendering

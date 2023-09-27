@@ -110,6 +110,16 @@ public:
 		glUniform1f(location, _value);
 	}
 
+	
+    //@brief Sets an integer or boolean uniform variable in a shader program.
+    //
+    // This function is versatile and serves two main purposes:
+    // 1. Setting integer uniform variables in the shader.
+    // 2. Specifying which texture unit a shader's texture sampler should use.
+    //
+    // @param _name The name of the uniform variable in the shader.
+    // @param _value The integer or boolean value to set the uniform variable to.
+    //
 	void SetInt(const std::string& _name, int _value) const
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
