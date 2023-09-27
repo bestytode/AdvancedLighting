@@ -187,21 +187,31 @@ int main()
 		glm::mat4 model = glm::mat4(1.0f);
 		shaderGeometryPass.SetMat4("projection", projection);
 		shaderGeometryPass.SetMat4("view", view);
+
 		for (size_t i = 0; i < objectPositions.size(); i++) {
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, objectPositions[i]);
 			model = glm::scale(model, glm::vec3(0.5f));
 			shaderGeometryPass.SetMat4("model", model);
-			//backpack.Draw(shaderGeometryPass);
 			for (size_t j = 0; j < backpack.meshes.size(); j++) {
-				glActiveTexture(GL_TEXTURE0);
-				shaderGeometryPass.SetInt("texture_diffuse1", backpack.textures_loaded[0].id);
-				glActiveTexture(GL_TEXTURE1);
-				shaderGeometryPass.SetInt("texture_specular1", backpack.textures_loaded[1].id);
-
-				glBindVertexArray(backpack.meshes[j].GetVAO());
-				glDrawElements(GL_TRIANGLES, backpack.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
-				glBindVertexArray(0);
+				for (const auto& texture : backpack.textures_loaded) {
+					if (texture.type == "texture_diffuse") {
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, texture.id);
+						shaderGeometryPass.SetInt("texture_diffuse1", 0);
+					}
+					else if (texture.type == "texture_specular") {
+						glActiveTexture(GL_TEXTURE1);
+						glBindTexture(GL_TEXTURE_2D, texture.id);
+						shaderGeometryPass.SetInt("texture_specular1", 1);
+					}
+					else if (texture.type == "texture_normal") {
+						// 
+					}
+					glBindVertexArray(backpack.meshes[j].GetVAO());
+					glDrawElements(GL_TRIANGLES, backpack.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
+					glBindVertexArray(0);
+				}
 			}
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
