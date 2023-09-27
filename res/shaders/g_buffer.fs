@@ -12,8 +12,6 @@ uniform sampler2D texture_specular1;
 
 void main()
 {
-	vec3 normal = texture(texture_normal1, TexCoords).rgb;
-
 	gPosition = FragPos;
 	gNormal = normalize(Normal);
 	gAlbedoSpecular.rgb = texture(texture_diffuse1, TexCoords).rgb;

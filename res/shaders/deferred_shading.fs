@@ -28,7 +28,7 @@ void main()
 	float Specular = texture(gAlbedoSpec, TexCoords).a;
 
 	// Calculate lighting
-	vec3 lighting = vec3(0.1f) * Diffuse;
+	vec3 lighting = vec3(0.3f) * Diffuse;
 	vec3 viewDir = normalize(viewPos - FragPos);
 	for(int i = 0; i < NR_LIGHTS; i++) {
 		vec3 lightDir = normalize(lights[i].Position - FragPos);
