@@ -148,10 +148,13 @@ inline Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 	}
 
+#ifdef  _DEBUG
 	if (this->firstTime) {
 		std::cout << "Mesh " << (hasTangentsAndBitangents ? "has" : "does not have") << " tangents and bitangents.\n";
 		this->firstTime = false;
 	}
+#endif 
+
 	return Mesh(vertices, indices, textures, hasTangentsAndBitangents);
 }
 

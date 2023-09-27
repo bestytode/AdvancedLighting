@@ -9,6 +9,7 @@
 #include "shader.h"
 #include "geometry_renderers.h"
 #include "model.h"
+#include "timer.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -37,6 +38,9 @@ float lastFrame = 0.0f;
 
 int main()
 {
+	Timer timer;
+	timer.start();
+
 	// glfw & glew configs
 	GLFWwindow* window = nullptr;
 	try {
@@ -165,6 +169,7 @@ int main()
 	shaderLightingPass.SetInt("gNormal", 1);
 	shaderLightingPass.SetInt("gAlbedoSpec", 2);
 
+	timer.stop();
 	// Imgui settings
 	bool firstTime = true;
 	double cursor_x, cursor_y;
