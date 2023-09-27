@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <unordered_set>
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
@@ -31,7 +32,6 @@ public:
 		std::cout << "successfully create and compile shader: \n" << vertexShaderPath <<
 			"\n" << fragmentShaderPath << "\n" << geometryShaderPath;
 #endif 
-
 	}
 
 	~Shader()
@@ -57,9 +57,11 @@ public:
 	void SetVec3(const std::string& _name, const glm::vec3& value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
-		if (location == -1) {
+		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
+			warnedUniforms.insert(_name);
 		}
 #endif
 		glUniform3fv(location, 1, &value[0]);
@@ -69,9 +71,11 @@ public:
 	{
 		glm::vec3 value(_x, _y, _z);
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
-		if (location == -1) {
+		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
+			warnedUniforms.insert(_name);
 		}
 #endif
 		glUniform3fv(location, 1, &value[0]);
@@ -80,9 +84,11 @@ public:
 	void SetVec2(const std::string& _name, const glm::vec2& value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
-		if (location == -1) {
+		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
+			warnedUniforms.insert(_name);
 		}
 #endif
 		glUniform2fv(location, 1, &value[0]);
@@ -91,9 +97,11 @@ public:
 	void SetMat4(const std::string& _name, const glm::mat4& _mat)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
-		if (location == -1) {
+		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
+			warnedUniforms.insert(_name);
 		}
 #endif
 		glUniformMatrix4fv(location, 1, GL_FALSE, &_mat[0][0]);
@@ -102,9 +110,11 @@ public:
 	void SetFloat(const std::string& _name, float _value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
-		if (location == -1) {
+		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
+			warnedUniforms.insert(_name);
 		}
 #endif
 		glUniform1f(location, _value);
@@ -120,12 +130,14 @@ public:
     // @param _name The name of the uniform variable in the shader.
     // @param _value The integer or boolean value to set the uniform variable to.
     //
-	void SetInt(const std::string& _name, int _value) const
+	void SetInt(const std::string& _name, int _value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
-		if (location == -1) {
+		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
+			warnedUniforms.insert(_name);
 		}
 #endif
 		glUniform1i(location, _value);
@@ -134,6 +146,7 @@ public:
 	void SetUniformBlock(const std::string& _name, const int bindingPoint) const
 	{
 		unsigned int blockIndex = glGetUniformBlockIndex(m_rendererID, _name.c_str());
+
 #ifdef _DEBUG
 		if (blockIndex == GL_INVALID_INDEX) 
 			std::cerr << "Warning: Uniform block " << _name << " not found in shader." << std::endl;
@@ -230,4 +243,5 @@ private:
 
 private:
 	unsigned int m_rendererID;
+	std::unordered_set<std::string> warnedUniforms;
 };
