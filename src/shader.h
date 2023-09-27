@@ -15,9 +15,12 @@
 // 
 // Usage Example:
 // Shader myShader("vertexShaderPath", "fragmentShaderPath");
+// Shader myShader("vertexShaderPath", "fragmentShaderPath", "geometryShaderPath");
+// 
 // myShader.Bind();
 // myShader.SetVec3("someUniform", glm::vec3(1.0f, 0.0f, 0.0f));
 // myShader.Unbind();
+// ------------------
 class Shader
 {
 public:
@@ -163,19 +166,26 @@ private:
 		glCompileShader(id);
 
 #ifdef _DEBUG
-		// returns in params the value of a parameter for a specific shader object
 		int result;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+
 		if (result == GL_FALSE) {
 			int length;
 			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-			char* message = (char*)malloc(length * sizeof(char));
-			glGetShaderInfoLog(id, length, &length, message);
-			std::cout << "Failed to compile" <<
-				(type == GL_VERTEX_SHADER ? "vertex" : "fragment") << std::endl;
-			std::cout << message << std::endl;
+			std::vector<char> message(length);
+			glGetShaderInfoLog(id, length, &length, message.data());
+			std::string errorMessage = "Failed to compile ";
+
+			if (type == GL_VERTEX_SHADER) errorMessage += "vertex";
+			else if (type == GL_FRAGMENT_SHADER) errorMessage += "fragment";
+			else if (type == GL_GEOMETRY_SHADER) errorMessage += "geometry";
+			else errorMessage += "unknown";
+			
+			errorMessage += " shader: ";
+			errorMessage += message.data();
 			glDeleteShader(id);
-			return 0;
+
+			throw std::runtime_error(errorMessage);
 		}
 #endif 
 		return id;
@@ -242,6 +252,6 @@ private:
 	}
 
 private:
-	unsigned int m_rendererID;
-	std::unordered_set<std::string> warnedUniforms;
+	unsigned int m_rendererID; // Unique identifier for the OpenGL shader program
+	std::unordered_set<std::string> warnedUniforms; // Set to keep track of uniform variables that have already triggered a warning
 };
