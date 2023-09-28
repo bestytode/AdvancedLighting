@@ -42,9 +42,21 @@ public:
 	// Prevent copying as this class manages OpenGL resources
 	Mesh(const Mesh&) = delete;
 	Mesh& operator=(const Mesh&) = delete;
-
-	// Public Methods
-	void Draw(Shader& shader) const;  // Draw the mesh
+	
+    // Draws the mesh using the provided shader.
+    // 
+    // Usage:
+    //   - To draw the mesh using only specific types of textures:
+    //       mesh.Draw(shader, {"texture_diffuse", "texture_specular"});
+    //   - To draw the mesh using all available textures:
+    //       mesh.Draw(shader);
+    //
+    // Reminder for GLSL code:
+    //   - The uniform sampler2D variables in the GLSL code should be named according
+    //     to the following format: "texture_diffuseN" or "texture_specularN", where
+    //     N is the texture number starting from 1.
+    //
+	void Draw(Shader& shader, const std::vector<std::string>& textureTypesToUse = {}) const;  
 
 	// Accessors
 	unsigned int GetVAO() { return VAO; }
@@ -122,9 +134,8 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept
 	}
 	return *this;
 }
-// first calculate the N-component per texture type and concatenate it to the texture's type string to get the uniform name. 
-// then locate the appropriate sampler, give it the location value to correspond with the currently active texture unit, and bind the texture. 
-void Mesh::Draw(Shader& shader) const
+
+void Mesh::Draw(Shader& shader, const std::vector<std::string>& textureTypesToUse) const
 {
 	// Start from material.diffuse1 or material.specular1
 	size_t diffuseNr = 1, specularNr = 1, normalNr = 1, heightNr = 1;
@@ -132,8 +143,15 @@ void Mesh::Draw(Shader& shader) const
 	for (size_t i = 0; i < textures.size(); i++) {
 		glActiveTexture(GL_TEXTURE0 + i);
 		// Get texture number£¨N in diffuse_textureN £©
-		std::string number;
 		std::string name = textures[i].type;
+
+		// Skip this texture if it's not in the list of types to use
+		if (!textureTypesToUse.empty() && 
+			std::find(textureTypesToUse.begin(), textureTypesToUse.end(), name) == textureTypesToUse.end()) {
+			continue;
+		}
+
+		std::string number;
 		if (name == "texture_diffuse")
 			number = std::to_string(diffuseNr++);
 		else if (name == "texture_specular")
@@ -146,7 +164,6 @@ void Mesh::Draw(Shader& shader) const
 		shader.SetInt((name + number).c_str(), i);
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
-	//glActiveTexture(GL_TEXTURE0);
 
 	// Draw mesh
 	glBindVertexArray(VAO);

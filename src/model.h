@@ -26,10 +26,19 @@ public:
 		LoadModel(_filePath);
 	}
 
-	void Draw(Shader& _shader) 
+	
+    // Draws the model using the provided shader.
+    //
+    // Usage:
+    //   - To draw the model using only specific types of textures:
+    //       model.Draw(shader, {"texture_diffuse", "texture_specular"});
+    //   - To draw the model using all available textures:
+    //       model.Draw(shader);
+    //
+	void Draw(Shader& _shader, const std::vector<std::string>& textureTypeToUse = {})
 	{
 		for (size_t i = 0; i < meshes.size(); i++)
-			meshes[i].Draw(_shader);
+			meshes[i].Draw(_shader, textureTypeToUse);
 	}
 
 private:
@@ -41,12 +50,13 @@ private:
 
 	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type,
 		std::string typeName);
+
 public:
 	std::vector<Mesh>meshes;
 	std::vector<Texture>textures_loaded;
+
 private:
 	std::string directory;
-
 	bool firstTime = true; // the first time to load mesh
 };
 
@@ -208,7 +218,7 @@ unsigned int TextureFromFile(const char* path, const std::string& directory)
 	int width, height, nrComponents;
 	unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
 	if (data) {
-		GLenum format;
+		GLenum format = GL_RED;
 		if (nrComponents == 1) format = GL_RED;
 		if (nrComponents == 3) format = GL_RGB;
 		if (nrComponents == 4) format = GL_RGBA;

@@ -198,41 +198,12 @@ int main()
 		shaderGeometryPass.SetMat4("projection", projection);
 		shaderGeometryPass.SetMat4("view", view);
 
-		//for (size_t i = 0; i < objectPositions.size(); i++) {
-		//	model = glm::mat4(1.0f);
-		//	model = glm::translate(model, objectPositions[i]);
-		//	model = glm::scale(model, glm::vec3(0.5f));
-		//	shaderGeometryPass.SetMat4("model", model);
-		//	for (size_t j = 0; j < nanosuit.meshes.size(); j++) {
-		//		for (const auto& texture : nanosuit.textures_loaded) {
-		//			if (texture.type == "texture_diffuse") {
-		//				glActiveTexture(GL_TEXTURE0);
-		//				glBindTexture(GL_TEXTURE_2D, texture.id);
-		//				shaderGeometryPass.SetInt("texture_diffuse1", 0);
-		//			}
-		//			else if (texture.type == "texture_specular") {
-		//				glActiveTexture(GL_TEXTURE1);
-		//				glBindTexture(GL_TEXTURE_2D, texture.id);
-		//				shaderGeometryPass.SetInt("texture_specular1", 1);
-		//			}
-		//			else if (texture.type == "texture_normal") {
-		//				// nothing here since we do not use normal map in this case
-		//			}
-		//			else if (texture.type == "texture_height") {
-		//				// nothing here since we do not use normal map in this case
-		//			}
-		//			glBindVertexArray(nanosuit.meshes[j].GetVAO());
-		//			glDrawElements(GL_TRIANGLES, nanosuit.meshes[j].indices.size(), GL_UNSIGNED_INT, 0);
-		//			glBindVertexArray(0);
-		//		}
-		//	}
-		//}
 		for (size_t i = 0; i < objectPositions.size(); i++) {
 			model = glm::mat4(1.0f);
 			model = glm::translate(model, objectPositions[i]);
 			model = glm::scale(model, glm::vec3(0.5f));
 			shaderGeometryPass.SetMat4("model", model);
-			nanosuit.Draw(shaderGeometryPass);
+			nanosuit.Draw(shaderGeometryPass, {"texture_diffuse", "texture_specular"});
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
