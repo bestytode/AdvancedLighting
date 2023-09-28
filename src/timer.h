@@ -6,6 +6,11 @@
 class Timer 
 {
 public:
+    using Clock = std::chrono::high_resolution_clock;
+    using TimePoint = std::chrono::time_point<Clock>;
+    using Duration = std::chrono::duration<float>;
+
+public:
     void start() 
     {
         if (!running && !paused) {
@@ -34,8 +39,8 @@ public:
     {
         if (running) {
             auto endTime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
-            std::cout << "Duration: " << duration << " microseconds" << std::endl;
+            float duration = std::chrono::duration<float>(endTime - startTime).count();
+            std::cout << "Duration: " << duration << " seconds" << std::endl;
             running = false;
             paused = false;
         }
@@ -61,7 +66,7 @@ public:
     }
 
 private:
-    std::chrono::time_point<std::chrono::high_resolution_clock> startTime, pauseTime;
+    TimePoint startTime, pauseTime;
     bool running = false;
     bool paused = false;
 };
