@@ -8,6 +8,9 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
 
+// Could be expanded further: 
+// Adding a float radius, so we don't need to do the calculcations  
+// where the distance is less than the radius of light.
 struct Light {
 	vec3 Position;
 	vec3 Color;

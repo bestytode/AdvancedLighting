@@ -56,7 +56,7 @@ public:
     //     to the following format: "texture_diffuseN" or "texture_specularN", where
     //     N is the texture number starting from 1.
     //
-	void Draw(Shader& shader, const std::vector<std::string>& textureTypesToUse = {}) const;  
+	void Render(Shader& shader, const std::vector<std::string>& textureTypesToUse = {}) const;
 
 	// Accessors
 	unsigned int GetVAO() { return VAO; }
@@ -135,7 +135,7 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept
 	return *this;
 }
 
-void Mesh::Draw(Shader& shader, const std::vector<std::string>& textureTypesToUse) const
+void Mesh::Render(Shader& shader, const std::vector<std::string>& textureTypesToUse) const
 {
 	// Start from material.diffuse1 or material.specular1
 	size_t diffuseNr = 1, specularNr = 1, normalNr = 1, heightNr = 1;

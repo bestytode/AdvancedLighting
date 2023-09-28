@@ -35,10 +35,10 @@ public:
     //   - To draw the model using all available textures:
     //       model.Draw(shader);
     //
-	void Draw(Shader& _shader, const std::vector<std::string>& textureTypeToUse = {})
+	void Render(Shader& _shader, const std::vector<std::string>& textureTypeToUse = {})
 	{
 		for (size_t i = 0; i < meshes.size(); i++)
-			meshes[i].Draw(_shader, textureTypeToUse);
+			meshes[i].Render(_shader, textureTypeToUse);
 	}
 
 private:

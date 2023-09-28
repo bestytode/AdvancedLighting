@@ -82,7 +82,7 @@ int main()
 	Shader shaderLightBox("res/shaders/deferred_light_box.vs", "res/shaders/deferred_light_box.fs");
 
 	// Load model(s)
-	Model backpack("res/models/backpack/backpack.obj");
+	//Model backpack("res/models/backpack/backpack.obj");
 	Model nanosuit("res/models/nanosuit/nanosuit.obj");
 
 	std::vector<glm::vec3> objectPositions;
@@ -135,9 +135,10 @@ int main()
 		std::cout << "Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// Lighting info
+	// Lighting info (as well as generating positions, colors, and radius of lights)
 	float linear = 0.7f;
 	float quadratic = 1.8f;
+	float constant = 1.0f;
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -146,6 +147,11 @@ int main()
 	const unsigned int nrLights = 32;
 	std::vector<glm::vec3>lightPositions;
 	std::vector<glm::vec3>lightColors;
+	std::vector<float>lightRadius;
+	lightPositions.reserve(nrLights);
+	lightColors.reserve(nrLights);
+	lightRadius.reserve(nrLights);
+
 	for (size_t i = 0; i < nrLights; i++) {
 		float x = 3.0f * dis(gen);
 		float y = 3.0f * dis(gen) - 1.0f;
@@ -156,6 +162,9 @@ int main()
 		float g = 0.5f * dis(gen) + 0.5f;
 		float b = 0.5f * dis(gen) + 0.5f;
 		lightColors.emplace_back(glm::vec3(r, g, b));
+		float maxBrightness = std::max(std::max(r, g), b);
+		float radius = (-linear + std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
+		lightRadius.push_back(radius);
 	}
 
 	// Set VAO for geometry shape for later use
@@ -170,6 +179,7 @@ int main()
 	shaderLightingPass.SetInt("gAlbedoSpec", 2);
 
 	timer.stop();
+
 	// Imgui settings
 	bool firstTime = true;
 	double cursor_x, cursor_y;
@@ -203,7 +213,7 @@ int main()
 			model = glm::translate(model, objectPositions[i]);
 			model = glm::scale(model, glm::vec3(0.5f));
 			shaderGeometryPass.SetMat4("model", model);
-			nanosuit.Draw(shaderGeometryPass, {"texture_diffuse", "texture_specular"});
+			nanosuit.Render(shaderGeometryPass, {"texture_diffuse", "texture_specular"});
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
