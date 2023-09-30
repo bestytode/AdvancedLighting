@@ -260,7 +260,6 @@
     <None Include="res\shaders\shadow_map_depth.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\deferred_shading.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
@@ -268,6 +267,7 @@
     <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\ssao.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\models\backpack\source_attribution.txt" />

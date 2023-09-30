@@ -259,7 +259,7 @@
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\deferred_shading.cpp">
+    <ClCompile Include="src\ssao.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

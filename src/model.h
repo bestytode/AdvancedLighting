@@ -47,6 +47,10 @@ public:
 		return meshes;
 	}
 
+	// CalculateAABB computes the Axis-Aligned Bounding Box (AABB) for the model.
+    // It returns a pair of glm::vec3 representing the minimum and maximum vertex positions that define the AABB.
+	std::pair<glm::vec3, glm::vec3> CalculateAABB();
+
 private:
 	void LoadModel(const std::string& _filePath);
 
@@ -64,6 +68,26 @@ private:
 
 	bool firstTime = true; // the first time to load mesh
 };
+
+std::pair<glm::vec3, glm::vec3> Model::CalculateAABB()
+{
+	glm::vec3 minVertexPos = glm::vec3(FLT_MAX);
+	glm::vec3 maxVertexPos = glm::vec3(-FLT_MAX);
+
+	for (const auto& mesh : this->meshes) {
+		for (const auto& vertex : mesh.vertices) {
+			minVertexPos.x = std::min(minVertexPos.x, vertex.position.x);
+			minVertexPos.y = std::min(minVertexPos.y, vertex.position.y);
+			minVertexPos.z = std::min(minVertexPos.z, vertex.position.z);
+
+			maxVertexPos.x = std::max(maxVertexPos.x, vertex.position.x);
+			maxVertexPos.y = std::max(maxVertexPos.y, vertex.position.y);
+			maxVertexPos.z = std::max(maxVertexPos.z, vertex.position.z);
+		}
+	}
+
+	return { minVertexPos, maxVertexPos };
+}
 
 // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
 void Model::LoadModel(const std::string& _filePath)

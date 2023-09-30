@@ -26,7 +26,7 @@ unsigned int LoadTexture(const std::string& path);
 constexpr int SCR_WIDTH = 1920;
 constexpr int SCR_HEIGHT = 1080;
 
-// Camera configs
+// Camera settings
 Camera camera(0.0f, 0.0f, 5.0f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
@@ -42,6 +42,7 @@ int main()
 	timer.start();
 
 	// glfw & glew configs
+	// -------------------
 	GLFWwindow* window = nullptr;
 	try {
 		if (!glfwInit())
@@ -68,6 +69,7 @@ int main()
 	}
 
 	// ImGui Initialization
+	// --------------------
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
@@ -77,22 +79,74 @@ int main()
 	ImGui_ImplOpenGL3_Init("#version 330 core");
 
 	// build and compile shader(s)
+	// ---------------------------
 	Shader shaderGeometryPass("res/shaders/ssao_geometry.vs", "res/shaders/ssao_geometry.fs");
 	Shader shaderLightingPass("res/shaders/ssao.vs", "res/shaders/ssao_lighting.fs");
 	Shader shaderSSAO("res/shaders/ssao.vs", "res/shaders/ssao.fs");
 	Shader shaderSSAOBlur("res/shaders/ssao.vs", "res/shaders/ssao_blur.fs");
 
 	// load model(s)
+	// -------------
 	Model backpack("res/models/backpack/backpack.obj");
 	Model nanosuit("res/models/nanosuit/nanosuit.obj");
 
-	timer.stop();
+	// Set up G-Buffer
+    // Three textures:
+    // 1. Positions + depth (RGBA)
+    // 2. Color (RGB) 
+    // 3. Normals (RGB) 
+	// ---------------
+	unsigned int gBuffer;
+	glGenFramebuffers(1, &gBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+	unsigned int gPositionDepth, gNormal, gAlbedo;
+	glGenTextures(1, &gPositionDepth);
+	glBindTexture(GL_TEXTURE_2D, gPositionDepth);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPositionDepth, 0);
+
+	glGenTextures(1, &gNormal);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+	glGenTextures(1, &gAlbedo);
+	glBindTexture(GL_TEXTURE_2D, gAlbedo);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
+
+	unsigned int attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+
+	unsigned int rboDepth;
+	glGenRenderbuffers(1, &rboDepth);
+	glBindBuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
 
 	// lighting info
+	// -------------
 	glm::vec3 lightPos = glm::vec3(2.0, 4.0, -2.0);
 	glm::vec3 lightColor = glm::vec3(0.2, 0.2, 0.7);
 
 	// shader configs
+	// --------------
 	shaderLightingPass.Bind();
 	shaderLightingPass.SetInt("gPosition", 0);
 	shaderLightingPass.SetInt("gNormal", 1);
@@ -105,7 +159,10 @@ int main()
 	shaderSSAOBlur.Bind();
 	shaderSSAOBlur.SetInt("ssaoInput", 0);
 
+	timer.stop();
+
 	// Imgui settings
+	// --------------
 	bool firstTime = true;
 	double cursor_x, cursor_y;
 	unsigned char pixel[4];
@@ -124,12 +181,10 @@ int main()
 
 		// ImGui code here
         // ---------------
-        // ImGui Frame Start
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		// ImGui GUI code
 		if (firstTime) {
 			ImGui::SetNextWindowSize(ImVec2(500, 400));
 			ImGui::SetNextWindowPos(ImVec2(50, 50));
