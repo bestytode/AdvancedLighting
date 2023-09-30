@@ -236,6 +236,12 @@
     <None Include="res\shaders\deferred_light_box.vs" />
     <None Include="res\models\backpack\backpack.mtl" />
     <None Include="res\models\nanosuit\nanosuit.mtl" />
+    <None Include="res\shaders\ssao_geometry.vs" />
+    <None Include="res\shaders\ssao_geometry.fs" />
+    <None Include="res\shaders\ssao.vs" />
+    <None Include="res\shaders\ssao.fs" />
+    <None Include="res\shaders\ssao_lighting.fs" />
+    <None Include="res\shaders\ssao_blur.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\imgui\imgui.cpp">

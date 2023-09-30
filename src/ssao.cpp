@@ -87,11 +87,15 @@ int main()
 
 	// load model(s)
 	// -------------
-	Model backpack("res/models/backpack/backpack.obj");
 	Model nanosuit("res/models/nanosuit/nanosuit.obj");
 
-	// Set up G-Buffer
-    // Three textures:
+	// Set VAO for geometry shape for later use
+	yzh::Quad quad;
+	yzh::Cube cube;
+	yzh::Sphere sphere;
+
+	// Set up G-Buffer with 3 textures:
+	// 
     // 1. Positions + depth (RGBA)
     // 2. Color (RGB) 
     // 3. Normals (RGB) 
@@ -140,6 +144,14 @@ int main()
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
 
+	// Also create framebuffer to hold SSAO processing stage 
+	// -----------------------------------------------------
+	// TODO
+	// Sample kernel
+	// TODO
+	// Noise texture
+	// TODO
+
 	// lighting info
 	// -------------
 	glm::vec3 lightPos = glm::vec3(2.0, 4.0, -2.0);
@@ -179,6 +191,41 @@ int main()
 		// Process input
 		ProcessInput(window);
 
+		// 1. Geometry Pass: render scene's geometry/color data into gbuffer
+		// -----------------------------------------------------------------
+		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		shaderGeometryPass.Bind();
+
+		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0, -1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(20.0f, 1.0f, 20.0f));
+		shaderGeometryPass.SetMat4("projection", projection);
+		shaderGeometryPass.SetMat4("view", view);
+		shaderGeometryPass.SetMat4("model", model);
+		cube.Render(); // Floor cube
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0));
+		model = glm::rotate(model, -90.0f, glm::vec3(1.0, 0.0, 0.0));
+		model = glm::scale(model, glm::vec3(0.5f));
+		shaderGeometryPass.SetMat4("model", model);
+		nanosuit.Render(shaderGeometryPass);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// 2. Create SSAO texture
+		// ----------------------
+		// TODO
+		// 3. Blur SSAO texture to remove noise
+		// ------------------------------------
+		// TODO
+		// 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
+		// ---------------------------------------------------------------------------------------------------------
+		// TODO
+		
 		// ImGui code here
         // ---------------
 		ImGui_ImplOpenGL3_NewFrame();
@@ -208,6 +255,14 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	// Optional: release all the resources of OpenGL (VAO, VBO, etc.)
+	glfwTerminate();
+
+	// ImGui Cleanup
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

@@ -258,6 +258,12 @@
     <None Include="res\shaders\shadow_map.vs" />
     <None Include="res\shaders\shadow_map_depth.fs" />
     <None Include="res\shaders\shadow_map_depth.vs" />
+    <None Include="res\shaders\ssao.fs" />
+    <None Include="res\shaders\ssao.vs" />
+    <None Include="res\shaders\ssao_blur.fs" />
+    <None Include="res\shaders\ssao_geometry.fs" />
+    <None Include="res\shaders\ssao_geometry.vs" />
+    <None Include="res\shaders\ssao_lighting.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\imgui\imgui.cpp" />
