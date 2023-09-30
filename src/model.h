@@ -10,6 +10,10 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <GL/glew.h>
 
 #include "mesh.h"
@@ -26,7 +30,6 @@ public:
 		LoadModel(_filePath);
 	}
 
-	
     // Draws the model using the provided shader.
     //
     // Usage:
@@ -35,10 +38,13 @@ public:
     //   - To draw the model using all available textures:
     //       model.Draw(shader);
     //
-	void Render(Shader& _shader, const std::vector<std::string>& textureTypeToUse = {})
-	{
+	void Render(Shader& _shader, const std::vector<std::string>& textureTypeToUse = {}) {
 		for (size_t i = 0; i < meshes.size(); i++)
 			meshes[i].Render(_shader, textureTypeToUse);
+	}
+
+	const std::vector<Mesh>& GetMesh() const{
+		return meshes;
 	}
 
 private:
@@ -51,12 +57,11 @@ private:
 	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type,
 		std::string typeName);
 
-public:
-	std::vector<Mesh>meshes;
-	std::vector<Texture>textures_loaded;
-
 private:
+	std::vector<Mesh>meshes; // Meshes where actually hold the data
+	std::vector<Texture>textures_loaded; // To prevent double texture loading
 	std::string directory;
+
 	bool firstTime = true; // the first time to load mesh
 };
 
