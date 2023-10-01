@@ -30,6 +30,8 @@ constexpr int SCR_HEIGHT = 1080;
 Camera camera(0.0f, 0.0f, 5.0f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
+float plane_near = 0.1f;
+float plane_far = 100.0f;
 bool mouseButtonPressed = true;
 
 // Timing
@@ -197,7 +199,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shaderGeometryPass.Bind();
 
-		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, plane_near, plane_far);
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0, -1.0f, 0.0f));
@@ -205,6 +207,8 @@ int main()
 		shaderGeometryPass.SetMat4("projection", projection);
 		shaderGeometryPass.SetMat4("view", view);
 		shaderGeometryPass.SetMat4("model", model);
+		shaderGeometryPass.SetFloat("plane_near", plane_near);
+		shaderGeometryPass.SetFloat("plane_far", plane_far);
 		cube.Render(); // Floor cube
 
 		model = glm::mat4(1.0f);
