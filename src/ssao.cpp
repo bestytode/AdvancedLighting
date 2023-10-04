@@ -146,13 +146,71 @@ int main()
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
 
-	// Also create framebuffer to hold SSAO processing stage 
-	// -----------------------------------------------------
-	// TODO
-	// Sample kernel
-	// TODO
-	// Noise texture
-	// TODO
+	// 2. Create SSAO texture
+    // ----------------------
+	unsigned int ssaoFBO, ssaoColorBuffer;
+	glGenFramebuffers(1, &ssaoFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
+	glGenTextures(1, &ssaoColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSAO Framebuffer not complete!" << std::endl;
+
+	// 3. Blur SSAO texture to remove noise
+	// ------------------------------------
+	unsigned int ssaoBlurFBO, ssaoColorBufferBlur;
+	glGenFramebuffers(1, &ssaoBlurFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+
+	glGenTextures(1, &ssaoColorBufferBlur);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSAO Blur Framebuffer not complete!" << std::endl;
+
+	// 4. Sample kernel (in tangent space)
+	// -----------------------------------
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dis(-1, 1);
+
+	std::vector<glm::vec3>sampleKernel;
+	unsigned int sampleSize = 64;
+	for (size_t i = 0; i < sampleSize; i++) {
+		glm::vec3 sample(dis(gen), dis(gen) * 0.5f + 0.5f, dis(gen));
+		sample = glm::normalize(sample);
+		sample *= dis(gen);
+
+		// Scale samples s.t. they're more aligned to center of kernel
+		float scale = float(i) / (float)sampleSize;
+		scale = lerp(0.1f, 1.0f, scale * scale);
+		sample *= scale;
+		sampleKernel.emplace_back(sample);
+	}
+
+	// 5. Noise texture
+	unsigned int noiseTexture;
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
+	std::vector<glm::vec3>ssaoNoise;
+	for (size_t i = 0; i < 16; i++) {
+		glm::vec3 noise(dis(gen), dis(gen), 0.0f); // rotate around z-axis (in tangent space)
+		ssaoNoise.emplace_back(noise);
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	// lighting info
 	// -------------
@@ -220,16 +278,24 @@ int main()
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// 2. Create SSAO texture
-		// ----------------------
-		// TODO
-		// 3. Blur SSAO texture to remove noise
-		// ------------------------------------
-		// TODO
-		// 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
-		// ---------------------------------------------------------------------------------------------------------
-		// TODO
-		
+		// 2. Create ssao texture
+		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaderSSAO.Bind();
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, gPositionDepth);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, gNormal);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, noiseTexture);
+		for (size_t i = 0; i < sampleSize; i++) {
+			shaderSSAO.SetVec3("samples[" + std::to_string(i) + "]", sampleKernel[i]);
+		}
+		shaderSSAO.SetMat4("projection", projection);
+		quad.Render();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 		// ImGui code here
         // ---------------
 		ImGui_ImplOpenGL3_NewFrame();

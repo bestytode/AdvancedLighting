@@ -10,6 +10,9 @@ in vec2 TexCoords;
 uniform float plane_near; // Projection matrix's near plane distance
 uniform float plane_far; // Projection matrix's far plane distance
 
+// Linearizes a depth value stored in the depth buffer.
+// The function takes a depth value in the range [0, 1] and converts it to a linear depth value.
+// This is useful for certain lighting calculations and depth comparisons.
 float LinearizeDepth(float depth)
 {
     float z = depth * 2.0 - 1.0; // Back to NDC 

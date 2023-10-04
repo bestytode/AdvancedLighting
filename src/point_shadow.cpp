@@ -19,8 +19,8 @@ void RenderCube();
 void RenderSphere();
 
 // Scene settings
-constexpr int SCR_WIDTH = 800;
-constexpr int SCR_HEIGHT = 600;
+constexpr int SCR_WIDTH = 1920;
+constexpr int SCR_HEIGHT = 1080;
 bool shadows = true;
 bool shadowKeyPressed = false;
 
