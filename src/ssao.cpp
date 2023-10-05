@@ -191,7 +191,7 @@ int main()
 
 		// Scale samples s.t. they're more aligned to center of kernel
 		float scale = float(i) / (float)sampleSize;
-		scale = lerp(0.1f, 1.0f, scale * scale);
+		scale = glm::mix(0.1f, 1.0f, scale * scale);
 		sample *= scale;
 		sampleKernel.emplace_back(sample);
 	}
@@ -214,8 +214,14 @@ int main()
 
 	// lighting info
 	// -------------
-	glm::vec3 lightPos = glm::vec3(2.0, 4.0, -2.0);
-	glm::vec3 lightColor = glm::vec3(0.2, 0.2, 0.7);
+	struct Light {
+		glm::vec3 position = glm::vec3(2.0, 4.0, -2.0);
+	    glm::vec3 color = glm::vec3(0.2, 0.2, 0.7);
+		const float constant = 1.0;
+		const float linear = 0.09;
+		const float quadratic = 0.032;
+	};
+	Light light;
 
 	// shader configs
 	// --------------
@@ -278,7 +284,8 @@ int main()
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// 2. Create ssao texture
+		// 2. Perform SSAO Calculation
+		// ---------------------------
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderSSAO.Bind();
@@ -293,8 +300,46 @@ int main()
 			shaderSSAO.SetVec3("samples[" + std::to_string(i) + "]", sampleKernel[i]);
 		}
 		shaderSSAO.SetMat4("projection", projection);
+		shaderSSAO.SetFloat("kernerlSize", sampleKernel.size());
+		shaderSSAO.SetFloat("radius", 1.0f);
 		quad.Render();
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// 3. Blur ssao texture to remove noise
+		// ------------------------------------
+		glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaderSSAOBlur.Bind();
+		
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+		quad.Render();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
+		// ---------------------------------------------------------------------------------------------------------
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		shaderLightingPass.Bind();
+		
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, gPositionDepth);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, gNormal);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, gAlbedo);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+        
+		// Send lighting uniforms
+		shaderLightingPass.SetVec3("light.position", light.position);
+		shaderLightingPass.SetVec3("light.color", light.color);
+		shaderLightingPass.SetFloat("light.constant", light.constant);
+		shaderLightingPass.SetFloat("light.linear", light.linear);
+		shaderLightingPass.SetFloat("light.quadratic", light.quadratic);
+		shaderGeometryPass.SetInt("draw_mode", true);
+		quad.Render();
 
 		// ImGui code here
         // ---------------
@@ -333,6 +378,8 @@ int main()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+
+	return 0;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
