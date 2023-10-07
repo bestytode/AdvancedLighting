@@ -14,7 +14,7 @@ uniform float radius;
 uniform mat4 projection;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
-const vec2 noiseScale = vec2(1920.0f/4.0f, 1080.0f/4.0f); 
+const vec2 noiseScale = vec2(1920.0f / 4.0f, 1080.0f / 4.0f); 
 
 void main()
 {
@@ -33,20 +33,29 @@ void main()
     float occlusion = 0.0f;
     for(int i = 0; i < kernelSize; i++) {
         // Sample Position
-        vec3 sample = TBN * samples[i];
+        vec3 sample = TBN * samples[i]; // tangent space -> view space
         sample = FragPos + sample * radius;
 
-        // project sample position (to sample texture)
+        // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(sample, 1.0f);
-        offset = projection * offset; // from view to clip-space
+        offset = projection * offset; // view space -> clip space
         offset.xyz /= offset.w; // perspective divide
         offset.xyz = offset.xyz * 0.5f + 0.5; // transform to range 0.0 - 1.0
 
         // get sample depth
         float sampleDepth = -texture(gPositionDepth, offset.xy).w; // Get depth value of kernel sample
 
+        // range check & accumulate ?
+        float rangeCheck = smoothstep(0.0, 1.0, radius / abs(FragPos.z - sampleDepth ));
 
+        // Compare the actual depth of the scene at the sample point (sampleDepth)
+        // with the depth of the sample point itself (sample.z).
+        // If sampleDepth is greater, it means the sample point is not occluded.
+        occlusion += (sampleDepth >= sample.z ? 1.0 : 0.0) * rangeCheck;   
     }
+
+    occlusion = 1.0 - (occlusion / kernelSize);
+    FragColor = occlusion;
 }
 
 

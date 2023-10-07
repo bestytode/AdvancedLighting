@@ -185,32 +185,34 @@ int main()
 	std::vector<glm::vec3>sampleKernel;
 	unsigned int sampleSize = 64;
 	for (size_t i = 0; i < sampleSize; i++) {
-		glm::vec3 sample(dis(gen), dis(gen) * 0.5f + 0.5f, dis(gen));
+		glm::vec3 sample(dis(gen), dis(gen), dis(gen) * 0.5f + 0.5f); // Generate random sample point in a hemisphere oriented along the z-axis
 		sample = glm::normalize(sample);
-		sample *= dis(gen);
+		sample *= dis(gen); // Provide random length of sample vector
 
-		// Scale samples s.t. they're more aligned to center of kernel
+		// Scale samples so that they are more aligned to the center of the kernel
 		float scale = float(i) / (float)sampleSize;
 		scale = glm::mix(0.1f, 1.0f, scale * scale);
 		sample *= scale;
 		sampleKernel.emplace_back(sample);
 	}
 
-	// 5. Noise texture
+	// 5. Noise texture (in tangent space)
 	unsigned int noiseTexture;
 	glGenTextures(1, &noiseTexture);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 
 	std::vector<glm::vec3>ssaoNoise;
 	for (size_t i = 0; i < 16; i++) {
-		glm::vec3 noise(dis(gen), dis(gen), 0.0f); // rotate around z-axis (in tangent space)
+        // Set z-coordinate to 0.0 to ensure the points will still be distributed in a hemisphere oriented along z-axis,
+		glm::vec3 noise(dis(gen), dis(gen), 0.0f); 
 		ssaoNoise.emplace_back(noise);
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+	// Notice we set both width and height to 4, which is the parameter that related to the size of 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]); 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Use GL_REPEAT to fill the quad as the noise texture is relatively small
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); 
 
 	// lighting info
 	// -------------
