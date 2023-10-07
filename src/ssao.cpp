@@ -1,3 +1,25 @@
+// This is really the most complex rendering technique I've tackled so far.
+// 
+// 1. Note that the depth values being compared are in view space.
+// 
+// 2. Various techniques are employed to improve quality and reduce sample size, 
+//    such as scaling samples in the kernel, tiling a 4x4 noise texture, applying a blur process, 
+//    and using the smoothstep function for range checking.
+// 
+// 3. The sample kernel is distributed in a hemisphere and is directly used in the GLSL shader.
+// 
+// 4. The noise texture is aligned with the z-axis, consistent with the sample kernel, 
+//    and is combined with a TBN matrix for orientation.
+// 
+// 5. The sample[i] is used to sample from the off-screen rendered texture after converting 
+//    from view space to the [0, 1] range.
+// 
+// 6. Only a single float value (GL_RED channel) is stored as the output color buffer texture 
+//    for both the SSAO and blur shaders, as we only need an occlusion coefficient (i.e., out float FragColor).
+// 
+// 2023-10-7
+// Author: Yu
+
 #include <iostream>
 #include <stdexcept>
 #include <random>
@@ -21,8 +43,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path);
-void renderQuad();
-void renderCube();
 
 // Scene settings
 constexpr int SCR_WIDTH = 1920;
@@ -34,11 +54,14 @@ float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 float plane_near = 0.1f;
 float plane_far = 100.0f;
-bool mouseButtonPressed = true;
+bool mouseButtonPressed = true; // only move the camera when mouse is being pressed
 
 // Timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// SSAO settings
+bool enableSSAO = true;
 
 int main()
 {
@@ -88,7 +111,7 @@ int main()
 	Shader shaderSSAO("res/shaders/ssao.vs", "res/shaders/ssao.fs");
 	Shader shaderSSAOBlur("res/shaders/ssao.vs", "res/shaders/ssao_blur.fs");
 	Shader shaderLightingPass("res/shaders/ssao.vs", "res/shaders/ssao_lighting.fs");
-	Shader shaderLightSource("res/shaders/deferred_light_box.vs", "res/shaders/deferred_light_box.fs");
+	//Shader shaderLightSource("res/shaders/ssao_light.vs", "res/shaders/ssao_light.fs");
 
 	// load model(s)
 	// -------------
@@ -98,7 +121,7 @@ int main()
 	// Set VAO for geometry shape for later use
 	yzh::Quad quad;
 	yzh::Cube cube;
-	//yzh::Sphere sphere;
+	yzh::Sphere sphere;
 
 	// Set up G-Buffer with 3 textures:
 	// 
@@ -274,7 +297,7 @@ int main()
 		shaderGeometryPass.SetMat4("view", view);
 		shaderGeometryPass.SetMat4("model", model);
 		shaderGeometryPass.SetInt("invertedNormals", 1); // invert normals as we're inside the cube
-		renderCube();
+		cube.Render();
 		shaderGeometryPass.SetInt("invertedNormals", 0);
 
 		model = glm::mat4(1.0f);
@@ -305,7 +328,7 @@ int main()
 		shaderSSAO.SetMat4("projection", projection);
 		shaderSSAO.SetFloat("kernelSize", (float)sampleSize);
 		shaderSSAO.SetFloat("radius", 1.0f);
-		renderQuad();
+		quad.Render();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -317,7 +340,7 @@ int main()
 		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
-		renderQuad();
+		quad.Render();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -341,21 +364,12 @@ int main()
 		shaderLightingPass.SetVec3("light.Color", light.color);
 		shaderLightingPass.SetFloat("light.Linear", light.linear);
 		shaderLightingPass.SetFloat("light.Quadratic", light.quadratic);
-		renderQuad();
+		quad.Render();
 
 		// 5. Render light source
-		shaderLightSource.Bind();
-
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, light.position);
-		model = glm::scale(model, glm::vec3(0.1f));
-
-		shaderLightSource.SetMat4("projection", projection);
-		shaderLightSource.SetMat4("view", view);
-		shaderLightSource.SetMat4("model", model);
-		shaderLightSource.SetVec3("lightColor", glm::vec3(1.0f));
-
-		cube.Render();
+		// ----------------------
+		// TODO
+		//shaderLightSource.Bind();
 
 		// ImGui code here
         // ---------------
@@ -488,111 +502,4 @@ unsigned int LoadTexture(const std::string& path)
 	}
 
 	return textureID;
-}
-
-// renderCube() renders a 1x1 3D cube in NDC.
-// -------------------------------------------------
-unsigned int cubeVAO = 0;
-unsigned int cubeVBO = 0;
-void renderCube()
-{
-	// initialize (if necessary)
-	if (cubeVAO == 0)
-	{
-		float vertices[] = {
-			// back face
-			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
-			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
-			 1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
-			 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
-			-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
-			-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
-			// front face
-			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
-			 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
-			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
-			 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
-			-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
-			-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
-			// left face
-			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
-			-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
-			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
-			-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
-			-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-			-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
-			// right face
-			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
-			 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
-			 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
-			 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
-			 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
-			 // bottom face
-			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-			  1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
-			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-			  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
-			 -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
-			 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
-			 // top face
-			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
-			  1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
-			  1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
-			  1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
-			 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
-			 -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
-		};
-		glGenVertexArrays(1, &cubeVAO);
-		glGenBuffers(1, &cubeVBO);
-		// fill buffer
-		glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		// link vertex attributes
-		glBindVertexArray(cubeVAO);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-	}
-	// render Cube
-	glBindVertexArray(cubeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-}
-
-
-// renderQuad() renders a 1x1 XY quad in NDC
-// -----------------------------------------
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
-{
-	if (quadVAO == 0)
-	{
-		float quadVertices[] = {
-			// positions        // texture Coords
-			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		};
-		// setup plane VAO
-		glGenVertexArrays(1, &quadVAO);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	}
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glBindVertexArray(0);
 }
