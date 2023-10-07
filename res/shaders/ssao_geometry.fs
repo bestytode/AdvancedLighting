@@ -11,6 +11,6 @@ void main()
 {
     // save fragPos in view space
     gPosition = FragPos;
-    gNormal = Normal;
+    gNormal = normalize(Normal);
     gAlbedo = vec3(0.95f);
 }

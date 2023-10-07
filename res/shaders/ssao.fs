@@ -20,8 +20,8 @@ void main()
 {
     // Retrieve Position and Normal from G-Buffer, noise vector from noiseTexture
     vec3 FragPos = texture(gPosition, TexCoords).xyz;
-    vec3 Normal = texture(gNormal, TexCoords).rgb;
-    vec3 randomVec = texture(noiseTexture, TexCoords * noiseScale).xyz;
+    vec3 Normal = normalize(texture(gNormal, TexCoords).rgb);
+    vec3 randomVec = normalize(texture(noiseTexture, TexCoords * noiseScale).xyz);
 
     // Create TBN change-of-basis matrix: from tangent-space to view-space
     // The TBN matrix is used to transform the sample points into an orientation
@@ -48,7 +48,7 @@ void main()
         offset.xyz = offset.xyz * 0.5f + 0.5; // transform to range 0.0 - 1.0
 
         // Retrieve the linearized depth value from the gPositionDepth texture.
-        float sampleDepth = texture(gPosition, offset.xy).w; 
+        float sampleDepth = texture(gPosition, offset.xy).z; 
 
         // Introduce a rangeCheck to ensure that it only affect the occlusion factor when the measured depth value is within the radius
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(FragPos.z - sampleDepth));
