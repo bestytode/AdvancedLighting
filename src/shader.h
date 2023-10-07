@@ -185,6 +185,7 @@ private:
 			errorMessage += message.data();
 			glDeleteShader(id);
 
+			std::cout << errorMessage << "\n";
 			throw std::runtime_error(errorMessage);
 		}
 #endif 

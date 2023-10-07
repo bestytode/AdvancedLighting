@@ -83,18 +83,19 @@ int main()
 	// build and compile shader(s)
 	// ---------------------------
 	Shader shaderGeometryPass("res/shaders/ssao_geometry.vs", "res/shaders/ssao_geometry.fs");
-	Shader shaderLightingPass("res/shaders/ssao.vs", "res/shaders/ssao_lighting.fs");
 	Shader shaderSSAO("res/shaders/ssao.vs", "res/shaders/ssao.fs");
 	Shader shaderSSAOBlur("res/shaders/ssao.vs", "res/shaders/ssao_blur.fs");
+	Shader shaderLightingPass("res/shaders/ssao.vs", "res/shaders/ssao_lighting.fs");
 
 	// load model(s)
 	// -------------
-	Model nanosuit("res/models/nanosuit/nanosuit.obj");
+	//Model nanosuit("res/models/nanosuit/nanosuit.obj");
+	Model backpack("res/models/backpack/backpack.obj");
 
 	// Set VAO for geometry shape for later use
 	yzh::Quad quad;
 	yzh::Cube cube;
-	yzh::Sphere sphere;
+	//yzh::Sphere sphere;
 
 	// Set up G-Buffer with 3 textures:
 	// 
@@ -106,32 +107,28 @@ int main()
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-	unsigned int gPositionDepth, gNormal, gAlbedo;
-	glGenTextures(1, &gPositionDepth);
-	glBindTexture(GL_TEXTURE_2D, gPositionDepth);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+	unsigned int gPosition, gNormal, gAlbedo;
+	glGenTextures(1, &gPosition);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPositionDepth, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
 	glGenTextures(1, &gAlbedo);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
 
 	unsigned int attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
@@ -185,7 +182,7 @@ int main()
 	std::vector<glm::vec3>sampleKernel;
 	unsigned int sampleSize = 64;
 	for (size_t i = 0; i < sampleSize; i++) {
-		glm::vec3 sample(dis(gen), dis(gen), dis(gen) * 0.5f + 0.5f); // Generate random sample point in a hemisphere oriented along the z-axis
+		glm::vec3 sample(dis(gen), dis(gen), (dis(gen) * 0.5f + 0.5f)); // Generate random sample point in a hemisphere oriented along the z-axis
 		sample = glm::normalize(sample);
 		sample *= dis(gen); // Provide random length of sample vector
 
@@ -208,7 +205,7 @@ int main()
 		ssaoNoise.emplace_back(noise);
 	}
 	// Notice we set both width and height to 4, which is the parameter that related to the size of 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]); 
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]); 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Use GL_REPEAT to fill the quad as the noise texture is relatively small
@@ -219,9 +216,8 @@ int main()
 	struct Light {
 		glm::vec3 position = glm::vec3(2.0, 4.0, -2.0);
 	    glm::vec3 color = glm::vec3(0.2, 0.2, 0.7);
-		const float constant = 1.0;
-		const float linear = 0.09;
-		const float quadratic = 0.032;
+		const float linear = 0.09f;
+		const float quadratic = 0.032f;
 	};
 	Light light;
 
@@ -235,7 +231,7 @@ int main()
 	shaderSSAO.Bind();
 	shaderSSAO.SetInt("gPosition", 0);
 	shaderSSAO.SetInt("gNormal", 1);
-	shaderSSAO.SetInt("texNoise", 2);
+	shaderSSAO.SetInt("noiseTexture", 2);
 	shaderSSAOBlur.Bind();
 	shaderSSAOBlur.SetInt("ssaoInput", 0);
 
@@ -268,21 +264,22 @@ int main()
 		glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, plane_near, plane_far);
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0, -1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(20.0f, 1.0f, 20.0f));
+		model = glm::translate(model, glm::vec3(0.0, 7.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(7.5f, 7.5f, 7.5f));
 		shaderGeometryPass.SetMat4("projection", projection);
 		shaderGeometryPass.SetMat4("view", view);
 		shaderGeometryPass.SetMat4("model", model);
-		shaderGeometryPass.SetFloat("plane_near", plane_near);
-		shaderGeometryPass.SetFloat("plane_far", plane_far);
+		shaderGeometryPass.SetInt("invertedNormals", 1); // invert normals as we're inside the cube
 		cube.Render(); // Floor cube
+		shaderGeometryPass.SetInt("invertedNormals", 0);
 
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0));
-		model = glm::rotate(model, -90.0f, glm::vec3(1.0, 0.0, 0.0));
-		model = glm::scale(model, glm::vec3(0.5f));
+		model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		model = glm::scale(model, glm::vec3(1.0f));
 		shaderGeometryPass.SetMat4("model", model);
-		nanosuit.Render(shaderGeometryPass);
+		//nanosuit.Render(shaderGeometryPass);
+		backpack.Render(shaderGeometryPass);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -293,7 +290,7 @@ int main()
 		shaderSSAO.Bind();
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, gPositionDepth);
+		glBindTexture(GL_TEXTURE_2D, gPosition);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, gNormal);
 		glActiveTexture(GL_TEXTURE2);
@@ -302,7 +299,7 @@ int main()
 			shaderSSAO.SetVec3("samples[" + std::to_string(i) + "]", sampleKernel[i]);
 		}
 		shaderSSAO.SetMat4("projection", projection);
-		shaderSSAO.SetFloat("kernerlSize", sampleKernel.size());
+		shaderSSAO.SetFloat("kernelSize", sampleKernel.size());
 		shaderSSAO.SetFloat("radius", 1.0f);
 		quad.Render();
 
@@ -325,8 +322,9 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shaderLightingPass.Bind();
 		
+		glm::vec3 lightPosView = glm::vec3(camera.GetViewMatrix() * glm::vec4(light.position, 1.0));
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, gPositionDepth);
+		glBindTexture(GL_TEXTURE_2D, gPosition);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, gNormal);
 		glActiveTexture(GL_TEXTURE2);
@@ -335,12 +333,10 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
         
 		// Send lighting uniforms
-		shaderLightingPass.SetVec3("light.Position", light.position);
+		shaderLightingPass.SetVec3("light.Position", lightPosView);
 		shaderLightingPass.SetVec3("light.Color", light.color);
-		shaderLightingPass.SetFloat("light.Constant", light.constant);
 		shaderLightingPass.SetFloat("light.Linear", light.linear);
 		shaderLightingPass.SetFloat("light.Quadratic", light.quadratic);
-		shaderGeometryPass.SetInt("draw_mode", true);
 		quad.Render();
 
 		// ImGui code here

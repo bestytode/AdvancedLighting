@@ -3,12 +3,12 @@ out float FragColor;
 
 in vec2 TexCoords;
 
-uniform sampler2D gPositionDepth;
+uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D noiseTexture;
 
 uniform vec3 samples[64];
-uniform float kernerlSize;
+uniform float kernelSize;
 uniform float radius;
 
 uniform mat4 projection;
@@ -19,18 +19,18 @@ const vec2 noiseScale = vec2(1920.0f / 4.0f, 1080.0f / 4.0f);
 void main()
 {
     // Retrieve Position and Normal from G-Buffer, noise vector from noiseTexture
-    vec3 FragPos = texture(gPositionDepth, TexCoords).rgb;
+    vec3 FragPos = texture(gPosition, TexCoords).xyz;
     vec3 Normal = texture(gNormal, TexCoords).rgb;
-    vec3 randomVec = texture(noiseTexture, TexCoords * noiseScale).rgb;
+    vec3 randomVec = texture(noiseTexture, TexCoords * noiseScale).xyz;
 
     // Create TBN change-of-basis matrix: from tangent-space to view-space
     // The TBN matrix is used to transform the sample points into an orientation
     // that aligns with the fragment's normal. This is essential for correct SSAO.
     // The TBN matrix also incorporates randomness through randomVec to make
     // the SSAO look more natural and avoid visual artifacts.
-    vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
-    vec3 bitangent = cross(normal, tangent);
-    mat3 TBN = mat3(tangent, bitangent, normal);
+    vec3 tangent = normalize(randomVec - Normal * dot(randomVec, Normal));
+    vec3 bitangent = cross(Normal, tangent);
+    mat3 TBN = mat3(tangent, bitangent, Normal);
 
     // SSAO Kernel Loop
     float occlusion = 0.0f;
@@ -48,8 +48,7 @@ void main()
         offset.xyz = offset.xyz * 0.5f + 0.5; // transform to range 0.0 - 1.0
 
         // Retrieve the linearized depth value from the gPositionDepth texture.
-        // Negate the value because the camera looks down the negative Z-axis in view space.
-        float sampleDepth = -texture(gPositionDepth, offset.xy).w; 
+        float sampleDepth = texture(gPosition, offset.xy).w; 
 
         // Introduce a rangeCheck to ensure that it only affect the occlusion factor when the measured depth value is within the radius
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(FragPos.z - sampleDepth));

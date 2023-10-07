@@ -2,7 +2,7 @@
 out float FragColor; // only red channel in texture
 
 in vec2 TexCoords;
-in sampler2D ssaoInput; // raw occlusion coefficient
+uniform sampler2D ssaoInput; // raw occlusion coefficient
 
 void main()
 {
