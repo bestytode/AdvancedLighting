@@ -335,11 +335,11 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
         
 		// Send lighting uniforms
-		shaderLightingPass.SetVec3("light.position", light.position);
-		shaderLightingPass.SetVec3("light.color", light.color);
-		shaderLightingPass.SetFloat("light.constant", light.constant);
-		shaderLightingPass.SetFloat("light.linear", light.linear);
-		shaderLightingPass.SetFloat("light.quadratic", light.quadratic);
+		shaderLightingPass.SetVec3("light.Position", light.position);
+		shaderLightingPass.SetVec3("light.Color", light.color);
+		shaderLightingPass.SetFloat("light.Constant", light.constant);
+		shaderLightingPass.SetFloat("light.Linear", light.linear);
+		shaderLightingPass.SetFloat("light.Quadratic", light.quadratic);
 		shaderGeometryPass.SetInt("draw_mode", true);
 		quad.Render();
 
