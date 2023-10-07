@@ -56,7 +56,7 @@ void main()
         // Compare the actual depth of the scene at the sample point (sampleDepth)
         // with the depth of the sample point itself (sample.z).
         // If sampleDepth is greater, it means the sample point is not occluded.
-        occlusion += (sampleDepth >= sample.z ? 1.0 : 0.0) * rangeCheck;   
+        occlusion += (sampleDepth >= sample.z + 0.025f ? 1.0 : 0.0) * rangeCheck;   
     }
 
     // Normalization & inversion for later use

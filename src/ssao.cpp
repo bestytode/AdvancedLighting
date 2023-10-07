@@ -62,6 +62,7 @@ float lastFrame = 0.0f;
 
 // SSAO settings
 bool enableSSAO = true;
+bool ssaoKeyPressed = false;
 
 int main()
 {
@@ -111,7 +112,7 @@ int main()
 	Shader shaderSSAO("res/shaders/ssao.vs", "res/shaders/ssao.fs");
 	Shader shaderSSAOBlur("res/shaders/ssao.vs", "res/shaders/ssao_blur.fs");
 	Shader shaderLightingPass("res/shaders/ssao.vs", "res/shaders/ssao_lighting.fs");
-	//Shader shaderLightSource("res/shaders/ssao_light.vs", "res/shaders/ssao_light.fs");
+	Shader shaderLightSource("res/shaders/deferred_light_box.vs", "res/shaders/deferred_light_box.fs");
 
 	// load model(s)
 	// -------------
@@ -284,6 +285,7 @@ int main()
 
 		// 1. Geometry Pass: render scene's geometry/color data into gbuffer
 		// -----------------------------------------------------------------
+		glEnable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shaderGeometryPass.Bind();
@@ -312,6 +314,7 @@ int main()
 
 		// 2. Perform SSAO Calculation
 		// ---------------------------
+		glDisable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderSSAO.Bind();
@@ -327,13 +330,14 @@ int main()
 		}
 		shaderSSAO.SetMat4("projection", projection);
 		shaderSSAO.SetFloat("kernelSize", (float)sampleSize);
-		shaderSSAO.SetFloat("radius", 1.0f);
+		shaderSSAO.SetFloat("radius", 0.05f);
 		quad.Render();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 3. Blur ssao texture to remove noise
 		// ------------------------------------
+		glDisable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderSSAOBlur.Bind();
@@ -346,9 +350,11 @@ int main()
 
 		// 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
 		// ---------------------------------------------------------------------------------------------------------
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT);
 		shaderLightingPass.Bind();
 		
+		// Notice we multiply view matrix here instead of in glsl code
 		glm::vec3 lightPosView = glm::vec3(camera.GetViewMatrix() * glm::vec4(light.position, 1.0));
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -364,12 +370,24 @@ int main()
 		shaderLightingPass.SetVec3("light.Color", light.color);
 		shaderLightingPass.SetFloat("light.Linear", light.linear);
 		shaderLightingPass.SetFloat("light.Quadratic", light.quadratic);
+
+		shaderLightingPass.SetInt("enableSSAO", enableSSAO);
 		quad.Render();
 
 		// 5. Render light source
 		// ----------------------
-		// TODO
-		//shaderLightSource.Bind();
+		glEnable(GL_DEPTH_TEST);
+		shaderLightSource.Bind();
+
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, light.position);
+		model = glm::scale(model, glm::vec3(0.05f));
+
+		shaderLightSource.SetMat4("projection", projection);
+		shaderLightSource.SetMat4("view", view);
+		shaderLightSource.SetMat4("model", model);
+		shaderLightSource.SetVec3("lightColor", light.color);
+		sphere.Render();
 
 		// ImGui code here
         // ---------------
@@ -390,6 +408,7 @@ int main()
 		glReadPixels(cursor_x, SCR_HEIGHT - cursor_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
 		ImGui::Text("Cursor position: (%f, %f)", cursor_x, cursor_y);
 		ImGui::Text("RGBA: (%d, %d, %d, %d)", pixel[0], pixel[1], pixel[2], pixel[3]);
+		ImGui::Checkbox("Enable SSAO", &enableSSAO);
 		ImGui::End();
 
 		// ImGui Rendering
@@ -466,6 +485,15 @@ void ProcessInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !ssaoKeyPressed) {
+		enableSSAO = !enableSSAO;
+		ssaoKeyPressed = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+		ssaoKeyPressed = false;
+	}
 }
 
 // Utility function for loading a 2D texture from file
