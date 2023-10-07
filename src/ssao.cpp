@@ -38,15 +38,15 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 // Function declarations (callback functions)
-void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
 unsigned int LoadTexture(const std::string& path);
 
 // Scene settings
-constexpr int SCR_WIDTH = 1920;
-constexpr int SCR_HEIGHT = 1080;
+int SCR_WIDTH = 1920;
+int SCR_HEIGHT = 1080;
 
 // Camera settings
 Camera camera(0.0f, 0.0f, 5.0f);
@@ -55,6 +55,7 @@ float lastY = (float)SCR_HEIGHT / 2.0;
 float plane_near = 0.1f;
 float plane_far = 100.0f;
 bool mouseButtonPressed = true; // only move the camera when mouse is being pressed
+bool enableCameraMovement = true;
 
 // Timing
 float deltaTime = 0.0f;
@@ -62,7 +63,6 @@ float lastFrame = 0.0f;
 
 // SSAO settings
 bool enableSSAO = true;
-bool ssaoKeyPressed = false;
 
 int main()
 {
@@ -208,7 +208,8 @@ int main()
 	std::uniform_real_distribution<float> dis(-1, 1);
 
 	std::vector<glm::vec3>sampleKernel;
-	unsigned int sampleSize = 64;
+	unsigned int sampleSize = 16;
+	float radius = 0.05f;
 	for (size_t i = 0; i < sampleSize; i++) {
 		glm::vec3 sample(dis(gen), dis(gen), (dis(gen) * 0.5f + 0.5f)); // Generate random sample point in a hemisphere oriented along the z-axis
 		sample = glm::normalize(sample);
@@ -330,7 +331,7 @@ int main()
 		}
 		shaderSSAO.SetMat4("projection", projection);
 		shaderSSAO.SetFloat("kernelSize", (float)sampleSize);
-		shaderSSAO.SetFloat("radius", 0.05f);
+		shaderSSAO.SetFloat("radius", radius);
 		quad.Render();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -396,9 +397,9 @@ int main()
 		ImGui::NewFrame();
 
 		if (firstTime) {
-			ImGui::SetNextWindowSize(ImVec2(500, 400));
+			ImGui::SetNextWindowSize(ImVec2(500, 250));
 			ImGui::SetNextWindowPos(ImVec2(50, 50));
-			firstTime = false;
+			//firstTime = false;
 		}
 		ImGui::Begin("hnzz");
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
@@ -406,11 +407,21 @@ int main()
 		// Retrieve and display the cursor position and the RGBA color of the pixel under the cursor
 		glfwGetCursorPos(window, &cursor_x, &cursor_y);
 		glReadPixels(cursor_x, SCR_HEIGHT - cursor_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
-		ImGui::Text("Cursor position: (%f, %f)", cursor_x, cursor_y);
+		ImGui::Text("Cursor position: (%.2f, %.2f)", cursor_x, cursor_y);
 		ImGui::Text("RGBA: (%d, %d, %d, %d)", pixel[0], pixel[1], pixel[2], pixel[3]);
-		ImGui::Checkbox("Enable SSAO", &enableSSAO);
 		ImGui::End();
 
+		if (firstTime) {
+			ImGui::SetNextWindowSize(ImVec2(500, 250));
+			ImGui::SetNextWindowPos(ImVec2(50, 350));
+			firstTime = false;
+		}
+		ImGui::Begin("ssao");
+		ImGui::Text("Sample Kernel: %u", sampleSize);
+		ImGui::SliderFloat("Radius", &radius, 0.0f, 1.0f);
+		ImGui::Checkbox("Enable camera movement", &enableCameraMovement);
+		ImGui::Checkbox("Enable SSAO", &enableSSAO);
+		ImGui::End();
 		// ImGui Rendering
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -432,16 +443,21 @@ int main()
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
-void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT)
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	// make sure the viewport matches the new window dimensions; note that SCR_WIDTH and 
 	// SCR_HEIGHT will be significantly larger than specified on retina displays.
-	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+	glViewport(0, 0, width, height);
+	SCR_WIDTH = width;
+	SCR_HEIGHT = height;
 }
 
 // glfw: whenever the mouse moves, this callback is called
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+	if (!enableCameraMovement)
+		return;
+
 	// Check if the left mouse button is pressed
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
 		float xpos = static_cast<float>(xposIn);
@@ -485,15 +501,6 @@ void ProcessInput(GLFWwindow* window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !ssaoKeyPressed) {
-		enableSSAO = !enableSSAO;
-		ssaoKeyPressed = true;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-		ssaoKeyPressed = false;
-	}
 }
 
 // Utility function for loading a 2D texture from file

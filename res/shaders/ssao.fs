@@ -7,8 +7,8 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D noiseTexture;
 
-uniform vec3 samples[64];
 uniform float kernelSize;
+uniform vec3 samples[16];
 uniform float radius;
 
 uniform mat4 projection;
