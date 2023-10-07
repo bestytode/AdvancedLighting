@@ -314,8 +314,8 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderSSAOBlur.Bind();
 		
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 		quad.Render();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);

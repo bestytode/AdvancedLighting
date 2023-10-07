@@ -1,5 +1,5 @@
 #version 330 core
-out vec4 FragColor;
+out float FragColor;
 
 in vec2 TexCoords;
 
@@ -65,25 +65,3 @@ void main()
     occlusion = 1.0 - (occlusion / kernelSize);
     FragColor = occlusion;
 }
-
-
-
-// Initialize Variables
-// -Initialize a variable to accumulate the occlusion factor. Let's call it occlusion.
-
-// SSAO Kernel Loop
-// -Loop through the SSAO kernel samples. For each sample:
-// -Transform Sample
-// --Rotate the sample point in the hemisphere to be oriented around the normal at the fragment.
-// -Sample Position
-// --Add the rotated and scaled sample to the fragment's position.
-// -Depth Comparison
-// --Compare the depth of the sampled position with the depth at the fragment to determine if the sample point is occluded.
-// -Accumulate Occlusion
-// --If the sample point is occluded, increment the occlusion variable.
-
-// Normalize Occlusion
-// -Divide the occlusion by the number of samples (kernelSize) to get an average.
-
-// sOutput Occlusion
-// -Output the occlusion as the fragment color.
