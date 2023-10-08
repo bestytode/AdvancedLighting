@@ -396,21 +396,20 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
+		// The first UI panal
 		if (firstTime) {
 			ImGui::SetNextWindowSize(ImVec2(500, 250));
 			ImGui::SetNextWindowPos(ImVec2(50, 50));
-			//firstTime = false;
 		}
 		ImGui::Begin("hnzz");
 		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-
-		// Retrieve and display the cursor position and the RGBA color of the pixel under the cursor
-		glfwGetCursorPos(window, &cursor_x, &cursor_y);
+		glfwGetCursorPos(window, &cursor_x, &cursor_y); // Retrieve and display the cursor position and the RGBA color of the pixel under the cursor
 		glReadPixels(cursor_x, SCR_HEIGHT - cursor_y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
 		ImGui::Text("Cursor position: (%.2f, %.2f)", cursor_x, cursor_y);
 		ImGui::Text("RGBA: (%d, %d, %d, %d)", pixel[0], pixel[1], pixel[2], pixel[3]);
 		ImGui::End();
 
+		// The second UI panal
 		if (firstTime) {
 			ImGui::SetNextWindowSize(ImVec2(500, 250));
 			ImGui::SetNextWindowPos(ImVec2(50, 350));
@@ -422,6 +421,7 @@ int main()
 		ImGui::Checkbox("Enable camera movement", &enableCameraMovement);
 		ImGui::Checkbox("Enable SSAO", &enableSSAO);
 		ImGui::End();
+
 		// ImGui Rendering
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
