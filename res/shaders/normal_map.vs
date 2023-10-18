@@ -36,7 +36,7 @@ void main()
     // It's used here to transform lightPos, viewPos, and FragPos to tangent space.
     mat3 TBN = transpose(mat3(T, B, N));  
 
-    // Transform lightPos, viewPos, and FragPos to tangent space
+    // Transform lightPos, viewPos, and FragPos from world space to tangent space
     tangentLightPos = TBN * lightPos;
     tangentViewPos = TBN * viewPos;
     tangentFragPos = TBN * FragPos;
