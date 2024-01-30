@@ -265,7 +265,7 @@
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ssao.cpp">
+    <ClCompile Include="src\blinn_phong.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

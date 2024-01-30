@@ -117,10 +117,12 @@ int main()
 		shadowTransforms.emplace_back(shadowProj * glm::lookAt(lightPos, lightPos + directions[i], upVectors[i]));	
 
 	while (!glfwWindowShouldClose(window)) {
+		// Calculating deltaTime
 		float currentFrame = (float)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		// Processing input
 		ProcessInput(window);
 
 		glClearColor(0.5f, 0.1f, 0.1f, 1.0f);

@@ -9,9 +9,8 @@
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
-// The Shader class encapsulates OpenGL shader programs.
-// It provides functionalities for creating, compiling, and linking shaders,
-// as well as setting uniform variables.
+// The Shader class encapsulates OpenGL shader programs. It provides functionalities for creating, 
+// compiling, and linking shaders, as well as setting uniform variables.
 // 
 // Usage Example:
 // Shader myShader("vertexShaderPath", "fragmentShaderPath");
@@ -26,9 +25,14 @@ class Shader
 public:
 	Shader() = delete;
 
+	// Constructor for the Shader class. 
+	// It requires paths to the vertex, fragment, and optionally, geometry shader source files.
 	Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath, const std::string& geometryShaderPath = "")
 	{
+		// Parse the shader source files. This function will read the shader files from the provided paths and return their contents as strings.
 		const auto& [vertexSource, fragmentSource, geometrySource] = ParseShader(vertexShaderPath, fragmentShaderPath, geometryShaderPath);
+
+		// Create the shader program using the parsed shader sources.
 		m_rendererID = CreateShader(vertexSource, fragmentSource, geometrySource);
 
 #ifdef _DEBUG
@@ -57,10 +61,15 @@ public:
 		return m_rendererID;
 	}
 
+	// Set a vec3 uniform in the shader.
+	//
+	// @param _name Name of the uniform variable in the shader.
+	// @param value glm::vec3 value to set.
 	void SetVec3(const std::string& _name, const glm::vec3& value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
 
+		// in case of debug mode, location equivalents to -1, and not the first time to show warning info, print warning.
 #ifdef _DEBUG
 		if (location == -1 && warnedUniforms.find(_name) == warnedUniforms.end()) {
 			std::cerr << "Warning: Uniform '" << _name << "' not found or shader program not linked.\n";
@@ -84,6 +93,10 @@ public:
 		glUniform3fv(location, 1, &value[0]);
 	}
 
+	// Set a vec2 uniform in the shader.
+	//
+	// @param _name Name of the uniform variable in the shader.
+	// @param value glm::vec2 value to set.
 	void SetVec2(const std::string& _name, const glm::vec2& value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
@@ -97,6 +110,10 @@ public:
 		glUniform2fv(location, 1, &value[0]);
 	}
 
+	// Set a mat4 uniform in the shader.
+	//
+	// @param _name Name of the uniform variable in the shader.
+	// @param value glm::mat4 value to set.
 	void SetMat4(const std::string& _name, const glm::mat4& _mat)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
@@ -110,6 +127,10 @@ public:
 		glUniformMatrix4fv(location, 1, GL_FALSE, &_mat[0][0]);
 	}
 
+	// Set a float uniform in the shader.
+	//
+	// @param _name Name of the uniform variable in the shader.
+	// @param value float value to set.
 	void SetFloat(const std::string& _name, float _value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
@@ -123,16 +144,16 @@ public:
 		glUniform1f(location, _value);
 	}
 
-	
-    //@brief Sets an integer or boolean uniform variable in a shader program.
-    //
-    // This function is versatile and serves two main purposes:
-    // 1. Setting integer uniform variables in the shader.
-    // 2. Specifying which texture unit a shader's texture sampler should use.
-    //
-    // @param _name The name of the uniform variable in the shader.
-    // @param _value The integer or boolean value to set the uniform variable to.
-    //
+
+	//@brief Sets an integer or boolean uniform variable in a shader program.
+	//
+	// This function is versatile and serves two main purposes:
+	// 1. Setting integer uniform variables in the shader.
+	// 2. Specifying which texture unit a shader's texture sampler should use.
+	//
+	// @param _name The name of the uniform variable in the shader.
+	// @param _value The integer or boolean value to set the uniform variable to.
+	//
 	void SetInt(const std::string& _name, int _value)
 	{
 		GLint location = glGetUniformLocation(m_rendererID, _name.c_str());
@@ -146,12 +167,16 @@ public:
 		glUniform1i(location, _value);
 	}
 
+	// Binds a named uniform block to a specific binding point.
+	// @param _name The name of the uniform block in the shader.
+	// @param bindingPoint The binding point where the uniform block will be bound.
+	// In debug mode, issues a warning if the block is not found.
 	void SetUniformBlock(const std::string& _name, const int bindingPoint) const
 	{
 		unsigned int blockIndex = glGetUniformBlockIndex(m_rendererID, _name.c_str());
 
 #ifdef _DEBUG
-		if (blockIndex == GL_INVALID_INDEX) 
+		if (blockIndex == GL_INVALID_INDEX)
 			std::cerr << "Warning: Uniform block " << _name << " not found in shader." << std::endl;
 #endif 
 		glUniformBlockBinding(m_rendererID, blockIndex, bindingPoint);
@@ -180,7 +205,7 @@ private:
 			else if (type == GL_FRAGMENT_SHADER) errorMessage += "fragment";
 			else if (type == GL_GEOMETRY_SHADER) errorMessage += "geometry";
 			else errorMessage += "unknown";
-			
+
 			errorMessage += " shader: ";
 			errorMessage += message.data();
 			glDeleteShader(id);
@@ -201,9 +226,9 @@ private:
 		std::stringstream vShaderStream, fShaderStream, gShaderStream;
 
 #ifdef  _DEBUG
-		if (!vShaderFile.is_open())  
-			std::cerr << "failed to open vertex shader file: " << vertexShaderPath; 
-		
+		if (!vShaderFile.is_open())
+			std::cerr << "failed to open vertex shader file: " << vertexShaderPath;
+
 		if (!fShaderFile.is_open())
 			std::cerr << "failed to open fragment shader file: " << fragmentShaderPath;
 #endif 
@@ -246,7 +271,7 @@ private:
 
 		glDeleteShader(vs);
 		glDeleteShader(fs);
-		if (gs!=0)
+		if (gs != 0)
 			glDeleteShader(gs);
 
 		return program;

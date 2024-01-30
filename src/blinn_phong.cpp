@@ -22,6 +22,7 @@ Camera camera(0.0f, 0.0f, 3.0f);
 float lastX = (float)width / 2.0;
 float lastY = (float)height / 2.0;
 bool firstMouse = true;
+bool mode_changed = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -120,8 +121,10 @@ int main()
         glBindTexture(GL_TEXTURE_2D, floorTexture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        std::cout << "press B to switch mode\n";
-        std::cout << "current render mode: "<< (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+        if (mode_changed) {
+            std::cout << "current render mode: " << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+            mode_changed = false;
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -148,6 +151,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed) {
         blinn = !blinn;
         blinnKeyPressed = true;
+        mode_changed = true;
     }
     if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE) {
         blinnKeyPressed = false;
