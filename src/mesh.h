@@ -161,6 +161,9 @@ void Mesh::Render(Shader& shader, const std::vector<std::string>& textureTypesTo
 		else if (name == "texture_height")
 			number = std::to_string(heightNr++);
 
+		// Notice: the corresponding uniform variable name should be:
+		// texture_diffuse1, texture_diffuse2, texture_specular2, etc.
+		// change this as needed(for different shader programs).
 		shader.SetInt((name + number).c_str(), i);
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
