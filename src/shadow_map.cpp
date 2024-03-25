@@ -5,14 +5,15 @@
 #include <GLFW/glfw3.h>
 
 #include "camera.h"
-#include "shader.h"
 #include "model.h"
+#include "shader.h"
 
 // Function declarations
 void framebuffer_size_callback(GLFWwindow* window, int SCR_WIDTH, int SCR_HEIGHT);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void ProcessInput(GLFWwindow* window);
+void CreateDepthMapFBO(unsigned int& depthMapFBO, unsigned int& depthMap);
 unsigned int LoadTexture(const std::string& path, bool gammaCorrection = false);
 
 void RenderScene(Shader& shader);
@@ -20,21 +21,28 @@ void RenderCube();
 void RenderQuad();
 
 // Scene settings
-constexpr int SCR_WIDTH = 800;
-constexpr int SCR_HEIGHT = 600;
+static constexpr int SCR_WIDTH = 800;
+static constexpr int SCR_HEIGHT = 600;
+static constexpr int SHADOW_WIDTH = 1024;
+static constexpr int SHADOW_HEIGHT = 1024;
 
 // Camera settings
 Camera camera(0.0f, 0.0f, 3.0f);
-float lastX = (float)SCR_WIDTH / 2.0;
-float lastY = (float)SCR_HEIGHT / 2.0;
-bool firstMouse = true;
+static float lastX = (float)SCR_WIDTH / 2.0;
+static float lastY = (float)SCR_HEIGHT / 2.0;
+static bool firstMouse = true;
 
 // Timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+static float deltaTime = 0.0f;
+static float lastFrame = 0.0f;
 
-// meshes
-unsigned int planeVAO;
+// VAOs & VBOs
+static unsigned int planeVAO = 0;
+static unsigned int planeVBO = 0;
+static unsigned int quadVAO = 0;
+static unsigned int quadVBO = 0;
+static unsigned int cubeVAO = 0;
+static unsigned int cubeVBO = 0;
 
 int main()
 {
@@ -77,7 +85,6 @@ int main()
 	};
 
 	// Set up VAO & VBO for plane
-	unsigned int planeVBO;
 	glGenVertexArrays(1, &planeVAO);
 	glGenBuffers(1, &planeVBO);
 	glBindVertexArray(planeVAO);
@@ -93,32 +100,12 @@ int main()
 	glBindVertexArray(0);
 
 	// Configure depth map FBO (frame buffer object)
-	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-	unsigned int depthMapFBO;
-	glGenFramebuffers(1, &depthMapFBO);
-
-	// Create depth texture (id)
-	unsigned int depthMap;
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-	// Attach depth texture as FBO's depth buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	unsigned int depthMapFBO = 0, depthMap = 0;
+	CreateDepthMapFBO(depthMapFBO, depthMap);
 
 	// Shader & texture configs
-	Shader shader("res/shaders/shadow_map.vs", "res/shaders/shadow_map.fs");
-	Shader simpleDepthShader("res/shaders/shadow_map_depth.vs", "res/shaders/shadow_map_depth.fs");
+	Shader shader("res/shaders/shadow_map.vs", "res/shaders/shadow_map.fs"); // shader render with depth_map, applying bias and PCF
+	Shader simpleDepthShader("res/shaders/shadow_map_depth.vs", "res/shaders/shadow_map_depth.fs"); // shader with designated FBO to render depth map
 	Shader debugDepthQuad("res/shaders/debug_quad.vs", "res/shaders/debug_quad.fs");
 	Shader lightShader("res/shaders/light.vs", "res/shaders/light.fs");
 
@@ -134,13 +121,15 @@ int main()
 	//glm::vec3 lightDirection(1.0f, -1.0f, 1.0f); // Directional light
 
 	while (!glfwWindowShouldClose(window)) {
-
+		// per-frame logic
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		// process input
 		ProcessInput(window);
 
+		// clear buffer(s)
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -158,13 +147,11 @@ int main()
 		// 1. Render scene from light's point of view to generate depth map
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-		glClear(GL_DEPTH_BUFFER_BIT);
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, woodTexture);
+		glClear(GL_DEPTH_BUFFER_BIT); // explicitly clear deapth buffer since we are rendering depth value
 		glCullFace(GL_FRONT);
 		RenderScene(simpleDepthShader);
 		glCullFace(GL_BACK);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind to default framebuffer
 
 		// Reset viewport
 		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -185,10 +172,10 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, woodTexture);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glBindTexture(GL_TEXTURE_2D, depthMap); // using rendered depthMap
 		RenderScene(shader);
 
-		// Render Depth map to quad for visual debugging
+		// optional: Render Depth map to quad for visual debugging
 		debugDepthQuad.Bind();
 		debugDepthQuad.SetFloat("near_plane", near_plane);
 		debugDepthQuad.SetFloat("far_plane", far_plane);
@@ -196,8 +183,7 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, depthMap); // Use depth map as texture to render
 		//RenderQuad();
 
-
-		// Render light 
+		// optional: Render light 
 		lightShader.Bind();
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPosition);
@@ -251,8 +237,6 @@ void RenderScene(Shader& shader)
 }
 
 // renderCube() renders a 1x1 3D cube in NDC.
-unsigned int cubeVAO = 0;
-unsigned int cubeVBO = 0;
 void RenderCube()
 {
 	// initialize (if necessary)
@@ -332,8 +316,6 @@ void RenderCube()
 }
 
 // renderQuad() renders a 1x1 XY quad in NDC
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
 void RenderQuad()
 {
 	if (quadVAO == 0) {
@@ -464,4 +446,28 @@ unsigned int LoadTexture(const std::string& path, bool gammaCorrection)
 	}
 
 	return textureID;
+}
+
+// return tuple, FBO & depthMap
+void CreateDepthMapFBO(unsigned int& depthMapFBO, unsigned int& depthMap)
+{
+	glGenFramebuffers(1, &depthMapFBO);
+
+	// Create depth texture (id)
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	// Attach depth texture as FBO's depth buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
